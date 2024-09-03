@@ -36,6 +36,13 @@
 <!-- TODO: In this Section you describe how to install this project in its intended environment.(i.e. how to get it to run)  
 -->
 
+For å starte prosjektet:
+```Bash
+python -m venv venv
+pip install -r requirements.txt
+source venv/bin/activate
+```
+
 <!-- TODO: Describe how to configure the project (environment variables, config files, etc.).
 
 ### Configuration
