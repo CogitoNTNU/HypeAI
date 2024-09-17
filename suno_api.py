@@ -41,6 +41,7 @@ def generate_whole_song(clip_id):
     response = requests.post(url, json=payload)
     return response.json()
 
+# Download audio
 def download_audio(data, filename):
     # Check if data is not empty and contains the required keys
     if data and 'audio_url' in data[0]:  # Directly access 'audio_url' in data[0]
@@ -57,6 +58,40 @@ def download_audio(data, filename):
             print("Audio URL is empty")
     else:
         print("Data does not contain an audio URL")
+
+# Generate and download audio. Requires a full path including file name and extension, and a prompt in this format:
+"""
+prompt = {
+"prompt": "Prompt text.",
+"make_instrumental": False,
+"wait_audio": False
+}   
+"""
+def generate_and_download(prompt, path):
+    result = generate_audio_by_prompt(prompt)
+    output_file = path
+    if result and isinstance(result, list) and 'id' in result[0]:
+        # Extract the ID(s)
+        audio_id = result[0]['id']
+        
+        # Step 3: Wait and poll the API to get the audio information
+        # You can loop with a timeout or just sleep for a fixed period like 40s
+        audio_data = get_audio_information(audio_id)
+        audio_url = result[0]['audio_url']
+        
+        # Wait for the audio to be ready
+        while audio_url == '' or audio_url is None:
+            time.sleep(30)
+            audio_data = get_audio_information(audio_id)
+            audio_url = audio_data[0]['audio_url']
+        
+        audio_data = get_audio_information(audio_id)
+        
+        # Temporary print statement
+        print("Audio data after fetching information:", audio_data)
+
+        # Step 4: If the audio is ready, download to the output file
+        download_audio(audio_data, output_file)
 
 
 if __name__ == '__main__':
