@@ -11,7 +11,7 @@ num_frames = fps * duration
 i = 1
 
 # Load the image
-image_path = "lilla2.jpg"  # Replace with your image
+image_path = "kanye2.jpg"  # Replace with your image
 image = Image.open(image_path)
 image_np = np.array(image)
 
@@ -28,7 +28,7 @@ canvas = np.zeros((height, width, 3), dtype=np.uint8)
 # Generate random shapes and sizes that progressively get smaller
 for frame_count in range(num_frames):
     # Calculate the current size of shapes
-    max_shape_size = max(1, int(35 - (frame_count / num_frames) * 35))
+    max_shape_size = max(1, int(100 - (frame_count / num_frames) * 100))
 
     # Number of shapes to add in this frame
     num_shapes = int(i*(200 - (frame_count / num_frames) * 180))
@@ -41,7 +41,7 @@ for frame_count in range(num_frames):
         y = random.randint(0, height - 1)
 
         # Pick the color from the original image at the selected location
-        color = tuple(int(c) for c in image_np[y, x])
+        color = tuple(reversed(tuple(int(c) for c in image_np[y, x])))
 
         # Pick a random shape size
         size = random.randint(1, max_shape_size)
