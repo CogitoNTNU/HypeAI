@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from PIL import Image
 import random
+import requests
+from io import BytesIO
 
 # Parameters for the video
 output_video = "output.mp4"
@@ -10,10 +12,18 @@ duration = 5  # in seconds
 num_frames = fps * duration
 i = 1
 
-# Load the image
-image_path = "kanye2.jpg"  # Replace with your image
-image = Image.open(image_path)
-image_np = np.array(image)
+# # Load the image
+# image_path = "kanye2.jpg"  # Replace with your image
+# image = Image.open(image_path)
+# image_np = np.array(image)
+
+# Image URL
+image_url = "https://hips.hearstapps.com/hmg-prod/images/kanye-west-attends-the-christian-dior-show-as-part-of-the-paris-fashion-week-womenswear-fall-winter-2015-2016-on-march-6-2015-in-paris-france-photo-by-dominique-charriau-wireimage-square.jpg"  # Replace with your image URL
+
+# Fetch the image from the URL
+response = requests.get(image_url)
+image = Image.open(BytesIO(response.content))  # Open the image from the bytes content
+image_np = np.array(image)  # Convert the image to a NumPy array
 
 # Get image dimensions
 height, width, _ = image_np.shape
