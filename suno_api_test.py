@@ -7,7 +7,7 @@ import time
 import os 
 
 
-output_file = os.path.join(os.path.dirname(__file__), "audio_output/output_2.wav")
+output_file = os.path.join(os.path.dirname(__file__), "audio_output/suno/output_2.wav")
 prompt = {
   "prompt": "An intense folk song-blast beat crossover.",
   "make_instrumental": False,
