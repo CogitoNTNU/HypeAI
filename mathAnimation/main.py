@@ -9,7 +9,7 @@ QUESTION_SYSTEM_PROMPT = "You are a math olympiad coach that creates interesting
 
 question_messages = [
     SystemMessage(QUESTION_SYSTEM_PROMPT),
-    HumanMessage("Create a geometry question.")
+    HumanMessage("Create a geometry question."),
 ]
 
 result = model.invoke(question_messages)
@@ -19,7 +19,10 @@ MANIM_SYSTEM_PROMPT = "You are an expert in creating math animations using the M
 
 manim_messages = [
     SystemMessage(MANIM_SYSTEM_PROMPT),
-    HumanMessage("Generate the Python code for animating the solution to this geometry question: " + question)
+    HumanMessage(
+        "Generate the Python code for animating the solution to this geometry question: "
+        + question
+    ),
 ]
 
 result = model.invoke(manim_messages)
