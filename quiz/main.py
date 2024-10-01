@@ -16,4 +16,5 @@ output = replicate.run(
         "safety_tolerance": 2
     }
 )
+
 print(output)
