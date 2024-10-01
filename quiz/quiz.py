@@ -50,24 +50,10 @@ def generate_quiz(knowledge_file, output_file, model="gpt-3.5-turbo", max_tokens
     save_text_to_file(output_file, output)
     #return generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
 
+# Only for testing
 def main():
-    # Placeholder file path (change this manually)
-    #file_path = 'knowledge/source_1.txt'
-    
-    # Read the knowledge text from the file
-    #knowledge_text = read_text_from_file(file_path)
-    
-    # Generate quiz questions and answers
-    #quiz_content = generate_quiz(knowledge_text)
     generate_quiz('knowledge/source_1.txt', 'quiz_output/quiz_output_1.txt')
     
-    # Store the result in a file
-    #output_file_path = 'quiz_output/quiz_output_1.txt'
-    #with open(output_file_path, 'w') as output_file:
-    #    output_file.write(quiz_content)
-    
-    # Return the result
-    # return quiz_content
 
 if __name__ == "__main__":
     result = main()

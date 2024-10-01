@@ -1,0 +1,56 @@
+import requests
+import os
+
+# Your Pixabay API key
+API_KEY = '38661004-e49591e433508369a5f90fd52' # Move this later
+
+def search_pixabay_videos(query):
+    # Pixabay API endpoint for video search
+    url = f'https://pixabay.com/api/videos/?key={API_KEY}&q={query}&per_page=3'
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        # Check if there are videos in the response
+        if data['hits']:
+            # Return the URL of the first video (HD quality if available)
+            video_url = data['hits'][0]['videos']['large']['url']
+            return video_url
+        else:
+            print('No videos found for this query.')
+            return None
+    else:
+        print(f'Error: {response.status_code}')
+        return None
+
+def download_video(video_url, output_directory):
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    
+    video_response = requests.get(video_url, stream=True)
+    if video_response.status_code == 200:
+        # Extract the filename from the URL
+        video_filename = os.path.join(output_directory, video_url.split('/')[-1])
+        
+        # Write video content to a file
+        with open(video_filename, 'wb') as video_file:
+            for chunk in video_response.iter_content(chunk_size=1024):
+                if chunk:
+                    video_file.write(chunk)
+                    
+        print(f'Video downloaded successfully: {video_filename}')
+    else:
+        print(f'Failed to download video. Status code: {video_response.status_code}')
+
+if __name__ == "__main__":
+    # Input for search query and output directory
+    search_query = 'America'
+    output_directory = 'quiz/quiz_videos'
+    
+    # Search for videos on Pixabay
+    video_url = search_pixabay_videos(search_query)
+    
+    # Download the first video if available
+    if video_url:
+        download_video(video_url, output_directory)
