@@ -256,3 +256,4 @@ Thumbs.db
 #Custom
 media/
 *.mp4
+manim_temp.py

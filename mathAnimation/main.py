@@ -15,7 +15,7 @@ question_messages = [
 result = model.invoke(question_messages)
 question = parser.invoke(result)
 
-MANIM_SYSTEM_PROMPT = "You are an expert in creating math animations using the Manim python library. You are excellent at taking a question and step-by-step solution as input, and animating it in a way that is entertainging and easy to understand. You will only output the python code for the animation, nothing else."
+MANIM_SYSTEM_PROMPT = "You are an expert in creating math animations using the Manim python library. You are excellent at taking a question and step-by-step solution as input, and animating it in a way that is entertainging and easy to understand. You will only output the python code for the animation, nothing else. Avoid using the Tex class for text rendering."
 
 manim_messages = [
     SystemMessage(MANIM_SYSTEM_PROMPT),
@@ -28,8 +28,22 @@ manim_messages = [
 result = model.invoke(manim_messages)
 python_code = parser.invoke(result)
 
+# Remove triple backticks if present
+python_code = python_code.replace("```python", "")
+python_code = python_code.replace("```py", "")
+python_code = python_code.replace("```", "")
+
 print("------------  Question  ------------")
 print(question)
 
 print("------------  Manim Code  ------------")
 print(python_code)
+
+# Execute the generated Manim code
+import subprocess
+
+PYTHON_FILE = "manim_temp.py"
+with open(PYTHON_FILE, "w") as f:
+    f.write(python_code)
+
+subprocess.run(["manim", "-pql", PYTHON_FILE, "GeneratedProblem"], check=True)
