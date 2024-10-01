@@ -6,7 +6,7 @@ model = ChatOpenAI(model="gpt-4o-mini")
 parser = StrOutputParser()
 
 PROBLEM_SYSTEM_PROMPT = "You are a math olympiad coach that creates interesting geometry problems. The problems are high school level difficulty. That are easy to understand, and should have a clever step by step proof."
-MANIM_SYSTEM_PROMPT = "You are an expert in creating math animations using the Manim python library. You are excellent at taking a problem and step-by-step solution as input, and animating it in a way that is entertainging and easy to understand. You will only output the python code for the animation, nothing else. Avoid using the Tex class for text rendering."
+MANIM_SYSTEM_PROMPT = "You are an expert in creating math animations using the Manim python library. You are excellent at taking a problem and step-by-step solution as input, and animating it in a way that is entertainging and easy to understand. You will only output the python code for the animation, nothing else."
 
 
 def generate_problem():
