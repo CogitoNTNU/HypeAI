@@ -22,7 +22,6 @@ def generate_audio_by_prompt(payload):
     response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'})
     return response.json()
 
-
 def get_audio_information(audio_ids):
     url = f"{base_url}/api/get?ids={audio_ids}"
     response = requests.get(url)
