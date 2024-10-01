@@ -3,9 +3,8 @@ import requests
 
 # replace your vercel domain
 
-# NB! Remember to change the base_url to the correct URL depending on whether the terminal tells you another port is being used
+# NB! After starting the api client using 'npm run dev' from the suno-api directory, remember to change base_url to the correct URL depending on whether the terminal tells you another port is being used
 base_url = 'http://localhost:3001'
-
 
 def custom_generate_audio(payload):
     url = f"{base_url}/api/custom_generate"
