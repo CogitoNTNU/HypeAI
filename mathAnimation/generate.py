@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 
-model = ChatOpenAI(model="gpt-4o-mini")
+model = ChatOpenAI(model="gpt-4o")
 parser = StrOutputParser()
 
 PROBLEM_SYSTEM_PROMPT = "You are a math olympiad coach that creates interesting geometry problems. The problems are high school level difficulty. That are easy to understand, and should have a clever step by step proof."
@@ -34,7 +34,8 @@ def generate_manim_code(problem):
 
 def parse_python_output(python_code):
     # Remove triple backticks if present
-    python_code = python_code.replace("```python", "")
-    python_code = python_code.replace("```py", "")
-    python_code = python_code.replace("```", "")
+    python_code = python_code.replace("```python", "```")
+    python_code = python_code.replace("```py", "```")
+    chunks = python_code.split("```")
+    python_code = chunks[1] if len(chunks) > 1 else chunks[0]
     return python_code
