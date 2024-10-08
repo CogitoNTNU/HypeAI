@@ -1,8 +1,23 @@
 import requests
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Your Pixabay API key
-API_KEY = '38661004-e49591e433508369a5f90fd52' # Move this later
+#API_KEY = '38661004-e49591e433508369a5f90fd52' # Move this later
+API_KEY = os.getenv('PIXABAY_API_KEY')
+
+'''
+Get a video URL and download it from pixabay all in one go. 
+'''
+def get_pixabay_video(query, output_directory):
+    video_url = search_pixabay_videos(query)
+    if video_url:
+        download_video(video_url, output_directory)
+    else:
+        print('No video found for this query.')
+
 
 def search_pixabay_videos(query):
     # Pixabay API endpoint for video search
@@ -45,12 +60,7 @@ def download_video(video_url, output_directory):
 
 if __name__ == "__main__":
     # Input for search query and output directory
-    search_query = 'America'
+    search_query = 'Nicaragua'
     output_directory = 'quiz/quiz_videos'
     
-    # Search for videos on Pixabay
-    video_url = search_pixabay_videos(search_query)
-    
-    # Download the first video if available
-    if video_url:
-        download_video(video_url, output_directory)
+    get_pixabay_video(search_query, output_directory)
