@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 # Add the parent directory of 'openai' to sys.path
 sys.path.append(os.path.abspath('../openai'))
@@ -34,9 +35,37 @@ def save_text_to_file(file_path, text):
         
 def generate_and_save(knowledge_file, output_file, model="gpt-3.5-turbo", max_tokens=750):
     
+    knowledge_text = read_text_from_file(knowledge_file)
+    
+    # Generate quiz questions and answers based on the knowledge text
+    quiz_qna = generate_quiz_qna(knowledge_file, model=model, max_tokens=max_tokens)
+    
+    # Parse the generated quiz questions and answers into a dictionary
+    qa_pairs = parse_questions_and_answers(quiz_qna)
+    
+    # Generate a keyword based on the knowledge text
+    quiz_keyword = generate_quiz_keyword(knowledge_file, model=model, max_tokens=20)
+    
+    # Generate a music prompt based on the knowledge text
+    quiz_music_prompt = generate_quiz_music_prompt(knowledge_file, model=model, max_tokens=100)
+    #save_text_to_file(output_file)
+    
+    # Create JSON objects
+    json_objects = [
+        {'type': 'knowledge', 'content': knowledge_text},
+        {'type': 'keyword', 'content': quiz_keyword},
+        {'type': 'music_prompt', 'content': quiz_music_prompt}
+    ]
+    for i, qa in enumerate(qa_pairs):
+        json_objects.append({'type': 'qa', 'question': qa['question'], 'answer': qa['answer']})
+    
+    # Save JSON objects to the output file
+    with open(output_file, 'w') as file:
+        json.dump(json_objects, file, indent=4)
+    
 
 # Generate quiz questions and answers based on the knowledge text
-def generate_quiz_qna(knowledge_file, output_file, model="gpt-3.5-turbo", max_tokens=500):
+def generate_quiz_qna(knowledge_file, model="gpt-3.5-turbo", max_tokens=500):
     """
     Generate quiz questions and answers based on the knowledge text.
 
@@ -51,13 +80,13 @@ def generate_quiz_qna(knowledge_file, output_file, model="gpt-3.5-turbo", max_to
     user_prompt = read_text_from_file(knowledge_file)
     
     output = generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
-    save_text_to_file(output_file, output)
-    #return output.strip()
+    #save_text_to_file(output_file, output)
+    return output.strip()
     #return generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
     
 
 # Generate a keyword based on the knowledge text
-def generate_quiz_keyword(knowledge_file, output, model="gpt-3.5-turbo", max_tokens=20):
+def generate_quiz_keyword(knowledge_file, model="gpt-3.5-turbo", max_tokens=20):
     """
     Generate a keyword based on the knowledge text.
 
@@ -99,11 +128,40 @@ def generate_quiz_music_prompt(knowledge_file, model="gpt-3.5-turbo", max_tokens
     music_prompt = generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
     
     return music_prompt.strip()
+
+''' 
+Parse the questions and answers generated into a list of dictionaries.
+'''
+def parse_questions_and_answers(text):
+    """
+    Parse the generated text to separate questions and answers.
+
+    :param text: The generated text containing questions and answers.
+    :return: A list of dictionaries with questions and answers.
+    """
+    lines = text.split('\n')
+    qa_pairs = []
+    current_question = None
+    current_answer = None
+
+    for line in lines:
+        if line.startswith('Q'):
+            if current_question and current_answer:
+                qa_pairs.append({'question': current_question, 'answer': current_answer})
+            current_question = line
+            current_answer = None
+        elif line.startswith('A'):
+            current_answer = line
+    if current_question and current_answer:
+        qa_pairs.append({'question': current_question, 'answer': current_answer})
+
+    return qa_pairs
     
 
 # Only for testing
 def main():
-    generate_quiz_qna('knowledge/source_1.txt', 'quiz_output/quiz_output_2.txt')
+    #generate_quiz_qna('knowledge/source_1.txt', 'quiz_output/quiz_output_2.txt')
+    generate_and_save('knowledge/source_1.txt', 'quiz_output/quiz_contents.json')
     
 
 if __name__ == "__main__":
