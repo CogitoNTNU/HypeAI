@@ -8,7 +8,7 @@ from io import BytesIO
 # Parameters for the video
 output_video = "output.mp4"
 fps = 30
-duration = 5  # in seconds
+duration = 6  # in seconds
 num_frames = fps * duration
 i = 1
 

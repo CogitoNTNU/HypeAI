@@ -11,16 +11,21 @@ def create_text_image(text, font_path, font_size, text_color, size, bg_color):
     except OSError as e:
         print(f"Error loading font: {e}")
         return None
-    w, h = draw.textsize(text, font=font)
+    
+    # Calculate text size using getbbox (returns the bounding box of the text)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w = bbox[2] - bbox[0]  # width
+    h = bbox[3] - bbox[1]  # height
+    
     position = ((size[0] - w) // 2, (size[1] - h) // 2)  # Center the text
     draw.text(position, text, fill=text_color, font=font)
     return img
 
 # Load video
-video = VideoFileClip("output.mp4")
+video = VideoFileClip("output_video_with_countdown.mp4")
 
 # Corrected font path
-font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+font_path = "/System/Library/Fonts/SFNSRounded.ttf"
 
 # Create text image with custom font
 text_image = create_text_image(
@@ -28,7 +33,7 @@ text_image = create_text_image(
     font_path=font_path,  # Correct path to DejaVu Sans font
     font_size=60, 
     text_color=(255, 255, 255, 255),  # White text
-    size=(500, 200),  # Width x Height of the text box
+    size=(500, 300),  # Width x Height of the text box
     bg_color=(0, 0, 0, 0)  # Transparent background
 )
 

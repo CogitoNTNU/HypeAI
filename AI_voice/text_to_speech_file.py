@@ -62,4 +62,4 @@ def text_to_speech_file(text: str) -> str:
 
 
 if __name__ == "__main__":
-    text_to_speech_file("Hello, world! This is a test of the ElevenLabs API.")
+    text_to_speech_file("Gues the celebrity before the timer runs out")

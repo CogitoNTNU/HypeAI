@@ -25,7 +25,7 @@ def create_text_image(text, font_path, font_size, text_color, size, bg_color):
 video = VideoFileClip("output.mp4")
 
 # Split the video into smaller clips (1 second each for countdown)
-clip_duration = 1/5  # Duration for each clip (in seconds)
+clip_duration = 1/100  # Duration for each clip (in seconds)
 num_clips = int(video.duration // clip_duration)  # Number of clips
 clips = []
 
@@ -43,7 +43,7 @@ for i in range(num_clips, 0, -1):
         font_path=font_path,
         font_size=60,
         text_color=(255, 255, 255, 255),  # White text
-        size=(500, 200),  # Width x Height of the text box
+        size=(500, 300),  # Width x Height of the text box
         bg_color=(0, 0, 0, 0)  # Transparent background
     )
     
