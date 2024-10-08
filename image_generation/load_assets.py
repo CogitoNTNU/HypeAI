@@ -10,7 +10,6 @@ assets_path.mkdir()
 print(f"Directory '{assets_path}' created!")
 
 
-
 with open("assets.txt", "r") as file:
     for i, line in enumerate(file.readlines(), 1):
         img = load_img_from_url(line.rstrip("\n"))
