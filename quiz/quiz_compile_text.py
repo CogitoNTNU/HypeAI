@@ -129,7 +129,13 @@ def generate_quiz_music_prompt(knowledge_file, model="gpt-3.5-turbo", max_tokens
     user_prompt = knowledge_text
     
     # Generate the music prompt
+
     music_prompt = generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
+    music_prompt = """{{
+                    "prompt": "{music_prompt}",
+                    "make_instrumental": False,
+                    "wait_audio": False
+                    }}""".format(music_prompt=music_prompt)
     
     return music_prompt.strip()
 
