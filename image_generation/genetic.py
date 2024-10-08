@@ -43,7 +43,16 @@ def generate_frame(prev_frame: Image.Image, assets, num_entities_tried):
 
     rotated_asset = random_asset.resize((random_size_x, random_size_y)).rotate(random_angle, expand=True)
 
+    rotated_asset.convert('RGBA')
+    random_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    pixels = rotated_asset.load()
+    
+    for y in range(rotated_asset.height):
+        for x in range(rotated_asset.width):
+            pixels[x][y] = (random_color,255)
+
     new_frame.paste(rotated_asset, (random_pos_x, random_pos_y), rotated_asset)
+    
     return new_frame
 
 
