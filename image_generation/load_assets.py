@@ -2,19 +2,13 @@ import requests
 from PIL import Image
 from pathlib import Path
 from io import BytesIO
+from utils import load_img_from_url
 
 # Create assets folder
 assets_path = Path("assets")
 assets_path.mkdir()
 print(f"Directory '{assets_path}' created!")
 
-
-def load_img_from_url(url):
-    response = requests.get(url)
-    img_data = response.content
-
-    img = Image.open(BytesIO(img_data))
-    return img
 
 
 with open("assets.txt", "r") as file:
