@@ -35,21 +35,23 @@ def create_quiz_video(json_file, video_file, output_dir):
     timestamps = [i * segment_duration for i in range(6)]
 
     # Create text clips for each question at the respective timestamp
-    video_clips = [video]  # Starting with the original video as base
+    #video_clips = [video]  # Starting with the original video as base
 
+    # Enumerate questions and add them to the video
+    question_clips = []
     for i, question in enumerate(questions):
-        question_clip = TextClip(question, fontsize=40, color='white', bg_color='black', size=video.size)
+        question_clip = TextClip(question, fontsize=40, color='white', bg_color='None', size=video.size)
         question_clip = question_clip.set_position('center').set_duration(segment_duration).set_start(timestamps[i])
-        video_clips.append(question_clip)
+        question_clips.append(question_clip)
 
     # Generate answer clip to show at the end
     answer_text = "Answers:\n" + "\n".join(answers)
-    answer_clip = TextClip(answer_text, fontsize=40, color='white', bg_color='black', size=video.size)
-    answer_clip = answer_clip.set_position('center').set_duration(10).set_start(video_duration - 10)  # Last 10 seconds for answers
-    video_clips.append(answer_clip)
+    answer_clip = TextClip(answer_text, fontsize=40, color='white', bg_color='None', size=video.size)
+    answer_clip = answer_clip.set_position('center').set_duration(segment_duration).set_start(timestamps[5])  # Last 10 seconds for answers (this needs to be adjusted)
+    question_clips.append(answer_clip)
 
     # Assemble the video
-    final_video = CompositeVideoClip(video_clips)
+    final_video = CompositeVideoClip([video] + question_clips)
 
     # Output the video to the user-specified directory
     output_path = os.path.join(output_dir, "quiz_video.mp4")
