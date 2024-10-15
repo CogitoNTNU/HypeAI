@@ -40,8 +40,6 @@ def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
     random_pos_x = random.randint(0, prev_frame.size[0])
     random_pos_y = random.randint(0, prev_frame.size[1])
 
-    print(random_asset.width, random_asset.height)
-
     rotated_asset = np.array(random_asset.resize((random_size_x, random_size_y)).rotate(random_angle, expand=True))
     
     x_end = min(random_pos_x + rotated_asset.shape[1], img.width)
@@ -61,7 +59,7 @@ def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
 
     rotated_asset[not_transparent_mask, 0] = mean_r
     rotated_asset[not_transparent_mask, 1] = mean_g
-    rotated_asset[not_transparent_mask, 2] = mean_g
+    rotated_asset[not_transparent_mask, 2] = mean_b
 
     rotated_asset = Image.fromarray(rotated_asset)
 
@@ -70,17 +68,24 @@ def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
     return new_frame
 
 
-def generate_video(img, assets, num_frames):
+def generate_video(img, assets, num_frames, num_comparisons):
     """Generate a video of an image gradualy appearing from a list of assets"""
 
     new_img = Image.new('RGB', img.size, (0, 0, 0))
 
     for i in range(num_frames):
-        new_img = generate_frame(img, new_img, assets, 1)
+        print(i)
+        best_score = float("inf")
+        best_frame = img
+        for j in range(num_comparisons):
+            new_frame = generate_frame(img, new_img, assets, 1)
+            score = abs(get_compare_score(new_frame, img))
+            if  score < best_score:
+                best_score = score
+                best_frame = new_frame
+        new_img = best_frame
 
     return new_img
-    
-
 
 
 
@@ -94,7 +99,7 @@ assets = load_assets(assets_path)
 
 # new_image = generate_frame(img, black_image, assets, 0)
 
-new_image = generate_video(img, assets, 10000)
+new_image = generate_video(img, assets, 100, 100)
 
 new_image.show()
 
