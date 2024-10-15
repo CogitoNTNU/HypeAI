@@ -17,7 +17,6 @@ def load_assets(path):
         if file_path.is_file():
             asset = Image.open(file_path)
             assets.append(asset)
-            print(f'File: {file_path.name}')
 
     return assets
 
@@ -27,7 +26,7 @@ def get_compare_score(img1, img2):
     return np.sum(abs(np.array(img1).flatten() - np.array(img2).flatten()))
 
 
-def generate_frame(prev_frame: Image.Image, assets, num_entities_tried):
+def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
     """Generate a new frame based on the old frame and an list of assets"""
     new_frame = prev_frame.copy()
 
@@ -35,21 +34,36 @@ def generate_frame(prev_frame: Image.Image, assets, num_entities_tried):
 
     random_angle = random.randint(0, 360)
 
-    random_size_x = random.randint(0, 200)
-    random_size_y = random.randint(0, 200)
+    random_size_x = random.randint(10, 200)
+    random_size_y = random.randint(10, 200)
 
     random_pos_x = random.randint(0, prev_frame.size[0])
     random_pos_y = random.randint(0, prev_frame.size[1])
 
-    rotated_asset = random_asset.resize((random_size_x, random_size_y)).rotate(random_angle, expand=True)
+    print(random_asset.width, random_asset.height)
 
-    rotated_asset.convert('RGBA')
-    random_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    pixels = rotated_asset.load()
+    rotated_asset = np.array(random_asset.resize((random_size_x, random_size_y)).rotate(random_angle, expand=True))
     
-    for y in range(rotated_asset.height):
-        for x in range(rotated_asset.width):
-            pixels[x][y] = (random_color,255)
+    x_end = min(random_pos_x + rotated_asset.shape[1], img.width)
+    y_end = min(random_pos_y + rotated_asset.shape[0], img.height)
+
+    rotated_asset = rotated_asset[:(y_end-random_pos_y), :(x_end-random_pos_x), :]
+
+    not_transparent_mask = np.array(rotated_asset)[:, :, 3] > 0
+
+    img_sliced = np.array(img)[random_pos_y:y_end, random_pos_x:x_end, :]
+ 
+    pixels = img_sliced[not_transparent_mask]
+
+    mean_r = np.mean(pixels[:, 0])
+    mean_g = np.mean(pixels[:, 1])
+    mean_b = np.mean(pixels[:, 2])
+
+    rotated_asset[not_transparent_mask, 0] = mean_r
+    rotated_asset[not_transparent_mask, 1] = mean_g
+    rotated_asset[not_transparent_mask, 2] = mean_g
+
+    rotated_asset = Image.fromarray(rotated_asset)
 
     new_frame.paste(rotated_asset, (random_pos_x, random_pos_y), rotated_asset)
     
@@ -58,6 +72,15 @@ def generate_frame(prev_frame: Image.Image, assets, num_entities_tried):
 
 def generate_video(img, assets, num_frames):
     """Generate a video of an image gradualy appearing from a list of assets"""
+
+    new_img = Image.new('RGB', img.size, (0, 0, 0))
+
+    for i in range(num_frames):
+        new_img = generate_frame(img, new_img, assets, 1)
+
+    return new_img
+    
+
 
 
 
@@ -69,9 +92,9 @@ diff = get_compare_score(img, black_image)
 
 assets = load_assets(assets_path)
 
-print(diff)
+# new_image = generate_frame(img, black_image, assets, 0)
 
-new_image = generate_frame(black_image, assets, 0)
+new_image = generate_video(img, assets, 10000)
 
 new_image.show()
 
