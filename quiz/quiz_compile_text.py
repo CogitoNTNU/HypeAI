@@ -125,7 +125,7 @@ def generate_quiz_music_prompt(knowledge_file, model="gpt-3.5-turbo", max_tokens
     knowledge_text = read_text_from_file(knowledge_file)
     
     # Define the system prompt to generate a music prompt
-    system_prompt = "Your job is to generate a short music prompt that captures the essence of the following knowledge."
+    system_prompt = "Your job is to generate a short music prompt that captures the essence of the following knowledge. The prompt should be a short description of the mood and style in natural language without the use of labels. Do not generate ANYTHING other than just the prompt itself. Nothing else. Do not refer to the fact that you have been prompted."
     user_prompt = knowledge_text
     
     # Generate the music prompt

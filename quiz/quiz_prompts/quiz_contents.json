@@ -5,35 +5,35 @@
     },
     {
         "type": "keyword",
-        "content": "Revolutionary Movement"
+        "content": "Independence movement"
     },
     {
         "type": "music_prompt",
-        "content": "Title: \"Revolutionary Resilience\"\n\nMusic Prompt: Create a stirring orchestral piece that begins with a sense of determination and defiance, building towards a powerful climax that symbolizes the united front of the American colonies against British oppression. Incorporate elements of struggle and triumph, mirroring the highs and lows of the American Revolution. Include traditional instruments like drums and flutes to evoke the spirit of rebellion and patriotism that fueled the fight for independence."
+        "content": "{\n                    \"prompt\": \"A rebellious and defiant call for freedom, echoing the struggle and spirit of the American Revolution.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q1: What led to the American Revolution in 1776?",
-        "answer": "A1: Discontent with colonial rule."
+        "question": "Q1: What was the American Revolution?",
+        "answer": "A1: Rebellion."
     },
     {
         "type": "qa",
-        "question": "Q2: When did the Boston Massacre take place?",
-        "answer": "A2: 1770."
+        "question": "Q2: When did the United States declare independence?",
+        "answer": "A2: July 1776."
     },
     {
         "type": "qa",
-        "question": "Q3: What event sparked the Boston Tea Party in 1773?",
-        "answer": "A3: Tea tax."
+        "question": "Q3: What event resulted in the Boston Massacre?",
+        "answer": "A3: Tensions."
     },
     {
         "type": "qa",
-        "question": "Q4: Who closed Boston Harbor after the Boston Tea Party?",
-        "answer": "A4: London."
+        "question": "Q4: What act led to the Boston Tea Party?",
+        "answer": "A4: Tea Act."
     },
     {
         "type": "qa",
-        "question": "Q5: What did the Stamp Act Congress argue against?",
-        "answer": "A5: Taxation."
+        "question": "Q5: What action ended self-government in Massachusetts?",
+        "answer": "A5: Punitive laws."
     }
 ]
