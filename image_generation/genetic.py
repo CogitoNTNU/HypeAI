@@ -1,12 +1,14 @@
 import random
+import cv2
 import numpy as np
+import concurrent.futures
 from pathlib import Path
 from PIL import Image
-from io import BytesIO
 from utils import load_img_from_url
 
 
 img_url = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
+img_url = "https://media.istockphoto.com/id/1251493047/vector/apple-flat-style-vector-icon.jpg?s=612x612&w=0&k=20&c=90r0D6OEq1wNRnfHHftEWibKBjdGe9OgMl6HEpi4d8Q="
 assets_path = Path("./assets/")
 
 
@@ -26,7 +28,7 @@ def get_compare_score(img1, img2):
     return np.sum(abs(np.array(img1).flatten() - np.array(img2).flatten()))
 
 
-def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
+def generate_frame(img, prev_frame: Image.Image, assets):
     """Generate a new frame based on the old frame and an list of assets"""
     new_frame = prev_frame.copy()
 
@@ -60,6 +62,9 @@ def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
     rotated_asset[not_transparent_mask, 0] = mean_r
     rotated_asset[not_transparent_mask, 1] = mean_g
     rotated_asset[not_transparent_mask, 2] = mean_b
+    # rotated_asset[not_transparent_mask, 0] = random.randint(0, 255)
+    # rotated_asset[not_transparent_mask, 1] = random.randint(0, 255)
+    # rotated_asset[not_transparent_mask, 2] = random.randint(0, 255)
 
     rotated_asset = Image.fromarray(rotated_asset)
 
@@ -68,39 +73,65 @@ def generate_frame(img, prev_frame: Image.Image, assets, num_entities_tried):
     return new_frame
 
 
-def generate_video(img, assets, num_frames, num_comparisons):
-    """Generate a video of an image gradualy appearing from a list of assets"""
+def multithread_generate_frames(img, prev_frame, assets, num_frames):
+    results = []
+    
+    # Using ThreadPoolExecutor for multithreading
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Submit multiple tasks to the thread pool
+        futures = [executor.submit(generate_frame, img, prev_frame, assets) for i in range(num_frames)]
 
-    new_img = Image.new('RGB', img.size, (0, 0, 0))
+        # Collect results as they are completed
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                results.append((future.result(), get_compare_score(img, future.result())))
+            except Exception as exc:
+                print(f"Generated frame failed with: {exc}")
+    
+    return results
 
-    for i in range(num_frames):
-        print(i)
-        best_score = float("inf")
-        best_frame = img
-        for j in range(num_comparisons):
-            new_frame = generate_frame(img, new_img, assets, 1)
-            score = abs(get_compare_score(new_frame, img))
-            if  score < best_score:
+
+def generate_video(img, assets, num_frames, tries_per_frame, output_file="output_video.mp4", fps=30):
+    """Generate a video of an image gradually appearing from a list of assets"""
+
+    # Create a blank image to start with
+    curr_img = Image.new('RGB', img.size, (0, 0, 0))
+
+    # Define video codec and create VideoWriter object
+    frame_size = img.size
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 files
+    out = cv2.VideoWriter(output_file, fourcc, fps, frame_size)
+
+    for i in range(num_frames): 
+        # Multithreaded frame generation
+        new_frames = multithread_generate_frames(img, curr_img, assets, tries_per_frame)
+        best_score = 1e100
+
+        # Select the best frame based on score
+        for frame, score in new_frames:
+            if score < best_score:
+                curr_img = frame
                 best_score = score
-                best_frame = new_frame
-        new_img = best_frame
 
-    return new_img
+        # Convert PIL Image to a format suitable for OpenCV (BGR format)
+        frame_bgr = cv2.cvtColor(np.array(curr_img), cv2.COLOR_RGB2BGR)
 
+        # Write the frame to the video file
+        out.write(frame_bgr)
 
+        print(f"{i} / {num_frames} frames processed.")
+
+    # Release the video writer object
+    out.release()
+
+    print(f"Video saved as {output_file}")
+
+    return curr_img
+    
 
 img = load_img_from_url(img_url)
-black_image = Image.new('RGB', img.size, (0, 0, 0))
-
-
-diff = get_compare_score(img, black_image)
-
 assets = load_assets(assets_path)
 
-# new_image = generate_frame(img, black_image, assets, 0)
+new_img = generate_video(img, assets, 100, 10)
 
-new_image = generate_video(img, assets, 100, 100)
-
-new_image.show()
-
-# img.show()
+new_img.show()
