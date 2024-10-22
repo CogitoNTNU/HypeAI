@@ -1,39 +1,39 @@
 [
     {
         "type": "knowledge",
-        "content": "The American Revolution was a rebellion and political movement in the Thirteen Colonies which peaked when colonists initiated an ultimately successful war for independence against the Kingdom of Great Britain. Leaders of the American Revolution were colonial separatist leaders who originally sought more autonomy as British subjects, but later assembled to support the Revolutionary War, which ended British colonial rule over the colonies, establishing their independence as the United States of America in July 1776.\n\nDiscontent with colonial rule began shortly after the defeat of France in the French and Indian War in 1763. Although the colonies had fought and supported the war, Parliament imposed new taxes to compensate for wartime costs and turned control of the colonies' western lands over to the British officials in Montreal. Representatives from several colonies convened the Stamp Act Congress; its \"Declaration of Rights and Grievances\" argued that taxation without representation violated their rights as Englishmen. In 1767, tensions flared again following the British Parliament's passage of the Townshend Acts. In an effort to quell the mounting rebellion, King George III deployed troops to Boston. A local confrontation resulted in the troops killing protesters in the Boston Massacre on March 5, 1770. In 1772, anti-tax demonstrators in Rhode Island destroyed the Royal Navy customs schooner Gaspee. On December 16, 1773, activists disguised as Indians instigated the Boston Tea Party and dumped chests of tea owned by the British East India Company into Boston Harbor. London closed Boston Harbor and enacted a series of punitive laws, which effectively ended self-government in Massachusetts.\n"
+        "content": "Minecraft is a 2011 sandbox game developed and published by Swedish video game developer Mojang Studios. Originally created by Markus \"Notch\" Persson using the Java programming language, the first public build was released on 17 May 2009. The game would continue to be developed over the span of two years, until its full release on 18 November 2011. Afterwards, Persson left Mojang and gave Jens \"Jeb\" Bergensten control over the game's development. In the years since its release, it has been ported to several platforms, including smartphones, tablets, and various video game consoles, primarily by 4J Studios.[e] In 2014, Mojang and the Minecraft intellectual property were purchased by Microsoft for US$2.5 billion. Minecraft has since become the best-selling video game of all-time, with over 300 million copies sold and nearly 140 million monthly active players as of 2023.  In Minecraft, players explore a procedurally generated, three-dimensional world with virtually infinite terrain made up of voxels. Players can discover and extract raw materials, craft tools and items, and build structures, earthworks, and machines. Depending on their chosen game mode, players can fight hostile mobs, as well as cooperate with or compete against other players. The game has two main modes; one being survival mode, where players must acquire resources to survive, and a creative mode where players have unlimited resources and the ability to fly. Several other game modes exist besides the two main ones, such as one that allows players to spectate others and one that plays identically to survival mode, but features permadeath. The game's large community also offers a wide variety of user-generated content, such as modifications, servers, skins, texture packs, and custom maps, which add new game mechanics and possibilities.  Minecraft has received critical acclaim, winning several awards and being cited as one of the greatest video games of all time; social media, parodies, adaptations, merchandise, and the annual Minecon conventions played prominent roles in popularizing the game. The game has also been used in educational environments to teach chemistry, computer-aided design, and computer science. Several spin-offs have also been made, including Minecraft: Story Mode, Minecraft Earth, Minecraft Dungeons, and Minecraft Legends. In addition, a live-action film based on the game, A Minecraft Movie, is scheduled for a theatrical release in April 2025."
     },
     {
         "type": "keyword",
-        "content": "Independence movement"
+        "content": "Block World"
     },
     {
         "type": "music_prompt",
-        "content": "{\n                    \"prompt\": \"A rebellious and defiant call for freedom, echoing the struggle and spirit of the American Revolution.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+        "content": "{\n                    \"prompt\": \"A calming and imaginative soundtrack suitable for embarking on a journey through a vast and diverse virtual world where creativity knows no bounds.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q1: What was the American Revolution?",
-        "answer": "A1: Rebellion."
+        "question": "Q1: When was Minecraft first publicly released?",
+        "answer": "A1: May 2009"
     },
     {
         "type": "qa",
-        "question": "Q2: When did the United States declare independence?",
-        "answer": "A2: July 1776."
+        "question": "Q2: Who took over Minecraft's development after Notch left?",
+        "answer": "A2: Jeb"
     },
     {
         "type": "qa",
-        "question": "Q3: What event resulted in the Boston Massacre?",
-        "answer": "A3: Tensions."
+        "question": "Q3: How many main modes does Minecraft have?",
+        "answer": "A3: Two"
     },
     {
         "type": "qa",
-        "question": "Q4: What act led to the Boston Tea Party?",
-        "answer": "A4: Tea Act."
+        "question": "Q4: What does the creative mode in Minecraft allow players to have?",
+        "answer": "A4: Unlimited resources"
     },
     {
         "type": "qa",
-        "question": "Q5: What action ended self-government in Massachusetts?",
-        "answer": "A5: Punitive laws."
+        "question": "Q5: What company acquired Minecraft and Mojang in 2014?",
+        "answer": "A5: Microsoft"
     }
 ]

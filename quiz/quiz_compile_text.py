@@ -8,9 +8,9 @@ sys.path.append(os.path.abspath('../openai'))
 from openai_api import generate_text
 
 '''
-This is for generating quiz questions and answers based on
-a text file containing knowledge about a certain topic, and related processing.
-The result is then used as the informational content of the quiz video.
+PURPOSE:
+To use Openai API to convert a raw knowledge file into a set of quiz questions,
+a keyword and a music prompt in JSON-format.
 '''
 
 def read_text_from_file(file_path):
@@ -80,7 +80,7 @@ def generate_quiz_qna(knowledge_file, model="gpt-3.5-turbo", max_tokens=500):
     """
 
     # Change system_prompt to generate better/different questions and answers
-    system_prompt = "Your job is to generate 5 extremely concise quiz questions and answers based on the following knowledge. The questions should be no more than 10 words and the answers should be no more than two words. The questions MUST begin with 'Q1:', 'Q2:', and so on until Q5. and the answers MUST begin with 'A1:', 'A2:', and so on until A5."
+    system_prompt = "Your job is to generate exactly 5 concise quiz questions and answers based on the following knowledge. The questions should be no more than 10 words and the answers should be no more than two words. The questions MUST begin with 'Q1:', 'Q2:', and so on until Q5. and the answers MUST begin with 'A1:', 'A2:', and so on until A5. There absolutely MUST be exactly five questions in total. No more and no less."
     user_prompt = read_text_from_file(knowledge_file)
     
     output = generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
@@ -103,7 +103,7 @@ def generate_quiz_keyword(knowledge_file, model="gpt-3.5-turbo", max_tokens=20):
     knowledge_text = read_text_from_file(knowledge_file)
     
     # Define the system prompt to generate a keyword
-    system_prompt = "Your job is to generate a single tag/keyword that captures the essence of the following knowledge. It must not be longer than two words."
+    system_prompt = "Your job is to generate a single tag/keyword that captures the essence of the following knowledge. It must not be longer than two words and should be as relevant as possible."
     user_prompt = knowledge_text
     
     # Generate the keyword

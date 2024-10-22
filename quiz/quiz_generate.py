@@ -3,6 +3,12 @@ import sys
 import os 
 import json
 
+'''
+PURPOSE:
+To download a Pixabay video and generate a music track using Suno API
+based on the existing content of the JSON-file with quiz data.
+'''
+
 #sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.append(os.path.abspath('../suno_api_call'))
 sys.path.append(os.path.abspath('../pixabay'))
@@ -19,7 +25,7 @@ def generate_and_save_all(input_file, output_directory):
     get_pixabay_video(get_keyword(input_file), output_directory)
     
     # Generate music track
-    generate_and_download(get_music_prompt(input_file), f"{output_directory}/music_track.mp3")
+    #generate_and_download(get_music_prompt(input_file), f"{output_directory}/music_track.mp3")
 
 '''
 Get the keyword from the json file. 
