@@ -1,3 +1,6 @@
 [submodule "suno-api"]
 	path = suno-api
 	url = https://github.com/gcui-art/suno-api.git
+[submodule "Suno-API"]
+	path = Suno-API
+	url = https://github.com/SunoAI-API/Suno-API.git
