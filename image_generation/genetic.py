@@ -55,16 +55,16 @@ def generate_frame(img, prev_frame: Image.Image, assets):
  
     pixels = img_sliced[not_transparent_mask]
 
-    mean_r = np.mean(pixels[:, 0])
-    mean_g = np.mean(pixels[:, 1])
-    mean_b = np.mean(pixels[:, 2])
+    # mean_r = np.mean(pixels[:, 0])
+    # mean_g = np.mean(pixels[:, 1])
+    # mean_b = np.mean(pixels[:, 2])
 
-    rotated_asset[not_transparent_mask, 0] = mean_r
-    rotated_asset[not_transparent_mask, 1] = mean_g
-    rotated_asset[not_transparent_mask, 2] = mean_b
-    # rotated_asset[not_transparent_mask, 0] = random.randint(0, 255)
-    # rotated_asset[not_transparent_mask, 1] = random.randint(0, 255)
-    # rotated_asset[not_transparent_mask, 2] = random.randint(0, 255)
+    # rotated_asset[not_transparent_mask, 0] = mean_r
+    # rotated_asset[not_transparent_mask, 1] = mean_g
+    # rotated_asset[not_transparent_mask, 2] = mean_b
+    rotated_asset[not_transparent_mask, 0] = random.randint(0, 255)
+    rotated_asset[not_transparent_mask, 1] = random.randint(0, 255)
+    rotated_asset[not_transparent_mask, 2] = random.randint(0, 255)
 
     rotated_asset = Image.fromarray(rotated_asset)
 
@@ -132,6 +132,6 @@ def generate_video(img, assets, num_frames, tries_per_frame, output_file="output
 img = load_img_from_url(img_url)
 assets = load_assets(assets_path)
 
-new_img = generate_video(img, assets, 100, 10)
+new_img = generate_video(img, assets, 10, 10000)
 
 new_img.show()
