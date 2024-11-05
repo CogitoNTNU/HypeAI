@@ -25,7 +25,7 @@ def generate_and_save_all(input_file, output_directory):
     get_pixabay_video(get_keyword(input_file), output_directory)
     
     # Generate music track
-    #generate_and_download(get_music_prompt(input_file), f"{output_directory}/music_track.mp3")
+    generate_and_download(get_music_prompt(input_file), f"{output_directory}/music_track.mp3")
 
 '''
 Get the keyword from the json file. 

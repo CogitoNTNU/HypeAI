@@ -5,15 +5,35 @@
     },
     {
         "type": "keyword",
-        "content": "Brush Strokes"
+        "content": "Brushwork perception"
     },
     {
         "type": "music_prompt",
-        "content": "{\n                    \"prompt\": \"Create a serene and flowing piano piece that captures the essence of a shimmering sunrise, with soft and delicate melodies painting a vivid picture of the changing light and subtle movement in nature.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+        "content": "{\n                    \"prompt\": \"A composition that paints a picture with delicate, fleeting brushstrokes of sound, capturing the essence of light and movement in everyday scenes.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q5: What type of angles are used in Impressionist art? ",
-        "answer": "A5: Unusual"
+        "question": "Q1: What art movement emphasized light, color, and brush strokes?",
+        "answer": "A1: Impressionism"
+    },
+    {
+        "type": "qa",
+        "question": "Q2: Which artist's work inspired the term \"Impressionism\"?",
+        "answer": "A2: Monet"
+    },
+    {
+        "type": "qa",
+        "question": "Q3: When did Impressionism arise?",
+        "answer": "A3: 19th century"
+    },
+    {
+        "type": "qa",
+        "question": "Q4: What subject matter did Impressionism focus on?",
+        "answer": "A4: Ordinary"
+    },
+    {
+        "type": "qa",
+        "question": "Q5: Which country did Impressionism face opposition in?",
+        "answer": "A5: France"
     }
 ]

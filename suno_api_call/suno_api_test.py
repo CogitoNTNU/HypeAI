@@ -6,9 +6,15 @@ from suno_api import download_audio
 from suno_api import generate_and_download
 import time
 import os 
+import os
 
+# Get the root directory of the project
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-output_file = os.path.join(os.path.dirname(__file__), "audio_output/suno/output_2.wav")
+# Construct the path relative to the root directory
+output_file = os.path.join(root_dir, "audio_output/output_2.wav")
+
+# output_file = os.path.join(os.path.dirname(__file__), "audio_output/suno/output_2.wav")
 prompt = {
   "prompt": "A happy-go-lucky folk song.",
   "make_instrumental": False,

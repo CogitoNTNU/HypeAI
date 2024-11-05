@@ -1,8 +1,8 @@
 import json
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip
 import os
 
-def create_quiz_video(json_file, video_file, output_dir):
+def create_quiz_video(json_file, video_file, audio_file, output_dir):
     """Creates a quiz video by overlaying questions and answers on top of the original video in sequence
 
     Args:
@@ -18,6 +18,8 @@ def create_quiz_video(json_file, video_file, output_dir):
     # Load the video
     video = VideoFileClip(video_file)
     video_duration = video.duration
+    
+    audio = AudioFileClip(audio_file).subclip(0, video_duration)
 
     # Collect questions and answers
     questions = []
@@ -55,10 +57,12 @@ def create_quiz_video(json_file, video_file, output_dir):
 
     # Assemble the video
     final_video = CompositeVideoClip([video] + question_answer_clips)
+    
+    final_video = final_video.set_audio(audio)
 
     # Output the video to the user-specified directory
     output_path = os.path.join(output_dir, "quiz_video.mp4")
-    final_video.write_videofile(output_path, codec='libx264')
+    final_video.write_videofile(output_path, codec='libx264', audio_codec='aac')
 
     print(f"Video successfully saved at: {output_path}")
     

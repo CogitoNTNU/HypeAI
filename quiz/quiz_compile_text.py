@@ -80,7 +80,7 @@ def generate_quiz_qna(knowledge_file, model="gpt-3.5-turbo", max_tokens=500):
     """
 
     # Change system_prompt to generate better/different questions and answers
-    system_prompt = "Your job is to generate exactly 5 concise quiz questions and answers based on the following knowledge. The questions should be no more than 10 words and the answers should be no more than two words. The questions MUST begin with 'Q1:', 'Q2:', and so on until Q5. and the answers MUST begin with 'A1:', 'A2:', and so on until A5. There absolutely MUST be exactly five questions in total. No more and no less."
+    system_prompt = "Your job is to generate exactly 5 concise quiz questions and answers based on the following knowledge. The questions should be no more than 10 AS SHORT AS POSSIBLE words and the answers should be no more than two words. The questions MUST begin with 'Q1:', 'Q2:', and so on until Q5. and the answers MUST begin with 'A1:', 'A2:', and so on until A5. There absolutely MUST be exactly five questions in total. No more and no less. The program WILL NOT WORK if there are not exactly five questions and answers."
     user_prompt = read_text_from_file(knowledge_file)
     
     output = generate_text(system_prompt, user_prompt, model=model, max_tokens=max_tokens)
