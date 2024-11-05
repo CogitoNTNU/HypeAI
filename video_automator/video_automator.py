@@ -1,17 +1,9 @@
 from abc import ABC, abstractmethod
 import os
 from video_uploader import VideoUploader
+from video_generator import VideoGenerator
 
 OUTPUT_PATH = "output/"
-
-
-class VideoGenerator(ABC):
-    @abstractmethod
-    def generate(self, output_path: str) -> None:
-        """
-        Generates a video and returns the path to the generated video
-        """
-        pass
 
 
 class VideoAutomator:
