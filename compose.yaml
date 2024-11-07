@@ -1,6 +1,7 @@
 services:
   selenium-app:
     build: .
+    command: python3 main.py
     ports:
       - "4444:4444"  # Expose the Selenium server port
     volumes:
