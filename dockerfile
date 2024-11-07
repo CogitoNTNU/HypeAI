@@ -19,15 +19,15 @@ USER seluser
 WORKDIR /app
 
 # Copy the requirements file and install dependencies
-COPY requirements.txt  .
+COPY --chown=seluser:seluser requirements.txt ./tiktok-uploader/ install_tiktok_uploader.bash ./
 
 # Create and use a virtual environment
 RUN python3 -m venv venv
 RUN ./venv/bin/python -m pip install -r requirements.txt
-RUN ./install_tiktok_uploader.sh
+RUN ./install_tiktok_uploader.bash
 
 # Copy the rest of the application code
-COPY . .
+COPY --chown=seluser:seluser . .
 
 # Run the main.py script
-CMD ["./venv/bin/python", "main.py"]
+CMD ["python3", "main.py"]
