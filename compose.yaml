@@ -1,0 +1,7 @@
+services:
+  selenium-app:
+    build: .
+    ports:
+      - "4444:4444"  # Expose the Selenium server port
+    volumes:
+      - .:/app  # Mount the current directory to /app in the container

@@ -1,3 +1,0 @@
-[submodule "video_automator/video_uploader/tiktok-uploader"]
-	path = video_automator/video_uploader/tiktok-uploader
-	url = git@github.com:wkaisertexas/tiktok-uploader.git
