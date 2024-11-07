@@ -1,12 +1,16 @@
 import tensorflow as tf
 import numpy as np
+import copy
 from PIL import Image
 from pathlib import Path
 from utils import load_img_from_url
 
+BATCH_SIZE = 200
+MIN_SCALE = 0.1
+MAX_SCALE = 5
 
-img_url = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
-assets_path = Path("./assets/")
+IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
+ASSETS_PATH = Path("./assets/")
 
 
 def img_to_tensor(img: Image) -> tf.Tensor:
@@ -229,19 +233,7 @@ def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
 
 @tf.function
 def translate_tensor_image_batch(images: tf.Tensor, translations: tf.Tensor) -> tf.Tensor:
-    """
-    Translate a batch of image tensors by specified amounts in x and y directions.
-
-    Args:
-        images: A 4D tensor of shape [batch_size, height, width, channels].
-        translations: A 2D tensor of shape [batch_size, 2], where each row is [dx, dy].
-
-    Returns:
-        Translated images as a 4D tensor of the same shape as the input images.
-    """
     batch_size = tf.shape(images)[0]
-    height = tf.cast(tf.shape(images)[1], tf.float32)
-    width = tf.cast(tf.shape(images)[2], tf.float32)
 
     # Prepare tensors for broadcasting
     zeros = tf.zeros([batch_size], dtype=tf.float32)
@@ -294,7 +286,7 @@ def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: 
     images_rgb = tf.cast(images_rgb, dtype=tf.float32)
 
     # Ensure the images have the same dimensions
-    assert images_with_alpha.shape[:3] == images_rgb.shape[:3], "Image dimensions must match"
+    # assert images_with_alpha.shape[:3] == images_rgb.shape[:3], "Image dimensions must match"
 
     batch_size, height, width = images_with_alpha.shape[:3]
 
@@ -332,32 +324,29 @@ def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: 
     return output_image
 
 
-def overlay_images(background: tf.Tensor, overlay: tf.Tensor) -> tf.Tensor:
-    """
-    Overlays an overlay image onto a background image of the same size.
-    
-    Args:
-        background: A 3D tensor of shape [height, width, channels] or 4D [batch_size, height, width, channels]
-                    without an alpha channel (e.g., RGB).
-        overlay: A 3D or 4D tensor of shape [height, width, channels] or [batch_size, height, width, channels]
-                 which may include an alpha channel.
-        
-    Returns:
-        A tensor of the same shape as background, with the overlay applied.
-    """
-    # Check if the overlay has an alpha channel (assumes channels last format)
-    if overlay.shape[-1] == background.shape[-1] + 1:  # e.g., RGBA overlay on RGB background
-        # Split overlay into RGB and alpha channels
-        overlay_rgb = overlay[..., :background.shape[-1]]
-        alpha_channel = overlay[..., -1:] / 255.0  # Normalize alpha to [0, 1] range if in 8-bit
+@tf.function
+def overlay_images_batch(background: tf.Tensor, overlays: tf.Tensor) -> tf.Tensor:
+    # Expand background to match the batch size of overlays
+    batch_size = tf.shape(overlays)[0]
+    background_batch = tf.broadcast_to(background, [batch_size, *background.shape])
 
-        # Blend overlay RGB with background using alpha
-        result = (alpha_channel * overlay_rgb) + ((1 - alpha_channel) * background)
-    else:
-        # If no alpha channel, replace the background directly with the overlay
-        result = overlay
+    # Split overlays into RGB and alpha channels
+    overlay_rgb = overlays[..., :background.shape[-1]]
+    alpha_channel = overlays[..., -1:] / 255.0  # Normalize alpha to [0, 1] range if in 8-bit
+
+    # Blend overlay RGB with background using alpha
+    result = (alpha_channel * overlay_rgb) + ((1 - alpha_channel) * background_batch)
 
     return tf.cast(result, background.dtype)
+
+
+@tf.function
+def select_images_by_indices(tensor_batch: tf.Tensor, indices: tf.Tensor) -> tf.Tensor:
+    
+    # Gather images based on the indexes
+    selected_images = tf.gather(tensor_batch, indices, axis=0)
+    
+    return selected_images
 
 
 @tf.function
@@ -389,16 +378,59 @@ class Object():
         self.scale += np.random.uniform(-grandess_of_scale_mutation, grandess_of_scale_mutation)
 
 
-def generate_random_population(size: int, min_x: int, max_x: int, min_y: int, max_y: int, min_scale: float, max_scale: float, index_range: int):
+
+def generate_random_population(size: int, min_x: int, max_x: int, min_y: int, max_y: int, min_scale: float, max_scale: float, index_range: int) -> list[Object]:
     return [Object(min_x, max_x, min_y, max_y, min_scale, max_scale, index_range) for i in range(size)]
 
 
-BATCH_SIZE = 200
-MIN_SCALE = 0.1
-MAX_SCALE = 2
+def generate_population_imgs(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
+    population_indices = tf.constant([obj.index for obj in population])
+    population_translations = tf.constant([[obj.x, obj.y] for obj in population])
+    population_angles = tf.constant([obj.angle for obj in population])
+    population_scales = tf.constant([obj.scale for obj in population])
+
+    population_assets = tf.gather(assets, population_indices)
+    population_assets = rotate_tensor_image_batch(population_assets, population_angles)
+    population_assets = scale_tensor_image_batch(population_assets, population_scales)
+    population_assets = translate_tensor_image_batch(population_assets, population_translations)
+    population_assets = apply_avg_color_to_masked_regions(population_assets, ref_img)
+
+    next_images_batch = overlay_images_batch(curr_img, population_assets)
+
+    return next_images_batch
 
 
-tensor_img = img_to_tensor(load_img_from_url(img_url))
+
+def update_population(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor, num_survivors: int, num_children: int, grandness_of_translation_mutation: int, grandness_of_angle_mutation: float, grandness_of_scale_mutation: float):
+    next_images_batch = generate_population_imgs(population, assets, curr_img, ref_img)
+
+    compare_scores = get_compare_score(next_images_batch, ref_img)
+
+    survivor_indices = tf.argsort(compare_scores, direction='ASCENDING')[:num_survivors]
+
+    survivors: list[Object] = [population[i] for i in survivor_indices]
+
+    for i in range(num_survivors):
+        for j in range(num_children):
+            child = copy.deepcopy(survivors[i])
+            child.mutate(grandness_of_translation_mutation, grandness_of_angle_mutation, grandness_of_scale_mutation)
+            population.append(child)
+    
+    return survivors
+
+
+def get_best_fit(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor):
+    next_images_batch = generate_population_imgs(population, assets, curr_img, ref_img)
+
+    compare_scores = get_compare_score(next_images_batch, ref_img)
+
+    best_index = tf.argsort(compare_scores, direction='ASCENDING')[0]
+
+    return next_images_batch[best_index]
+
+
+
+tensor_img = img_to_tensor(load_img_from_url(IMG_URL))
 tensor_batch = create_tile_batch(tensor_img, BATCH_SIZE)
 
 height, width = tensor_img.shape[:2]
@@ -409,45 +441,15 @@ max_y = height//2
 
 curr_tensor_img = tf.zeros([height, width, 3], dtype=tf.float32)
 
-assets = load_assets_with_padding(assets_path, width, height)
-
-population = generate_random_population(BATCH_SIZE, min_x, max_x, min_y, max_y, MIN_SCALE, MAX_SCALE, len(assets))
+assets = load_assets_with_padding(ASSETS_PATH, width, height)
 
 
-angles = np.random.uniform(0, 2 * np.pi, BATCH_SIZE)
-angles_tensor_batch = tf.convert_to_tensor(angles, dtype=tf.float32)
-
-scales = np.random.uniform(0.1, 2, BATCH_SIZE)
-scales_tensor_batch = tf.convert_to_tensor(angles, dtype=tf.float32)
-
-roteted_tensors = rotate_tensor_image_batch(tensor_batch, angles_tensor_batch)
-scaled_tensorts = scale_tensor_image_batch(roteted_tensors, scales_tensor_batch)
-
-# img = tensor_to_img(scaled_tensorts[0])
-
-# img.show()
-
-# img = tensor_to_img(scaled_tensorts[1])
+for i in range(10):
+    print(f"{i} / 10")
+    population = generate_random_population(BATCH_SIZE, min_x, max_x, min_y, max_y, MIN_SCALE, MAX_SCALE, len(assets))
+    curr_tensor_img = get_best_fit(population, assets, curr_tensor_img, tensor_img)
 
 
-
-translations_x = np.random.randint(-width//2, width//2, len(assets))
-translations_y = np.random.randint(-height//2, height//2, len(assets))
-
-translations_tensor_batch = tf.stack([tf.constant(translations_x), tf.constant(translations_y)], axis=1)
-
-print(translations_tensor_batch.shape)
-
-translated_assets = translate_tensor_image_batch(assets, translations_tensor_batch)
-
-colored_assets = apply_avg_color_to_masked_regions(translated_assets[:BATCH_SIZE], tensor_batch)
-
-curr_tensor_img = overlay_images(curr_tensor_img, colored_assets[0])
-curr_tensor_img = overlay_images(curr_tensor_img, colored_assets[1])
-
-scores = get_compare_score(colored_assets, tensor_batch)
-print(scores)
 
 img = tensor_to_img(curr_tensor_img)
-
 img.show()
