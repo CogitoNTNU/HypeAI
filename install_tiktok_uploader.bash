@@ -2,5 +2,5 @@
 
 cd tiktok-uploader
 hatch build
-./../venv/bin/python -m pip install -e .
+python3 -m pip install -e . --break-system-packages
 cd ..

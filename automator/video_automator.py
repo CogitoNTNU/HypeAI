@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 import os
-from video_uploader import VideoUploader
-from video_generator import VideoGenerator
+from automator.video_uploader import VideoUploader
+from automator.video_generator import VideoGenerator
 
-OUTPUT_PATH = "output/"
+OUTPUT_PATH = "automator/output/"
 
 
 class VideoAutomator:

@@ -13,7 +13,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Switch back to selenium user
-# USER root
+# USER seluser
 
 # Set the working directory
 WORKDIR /app
@@ -22,12 +22,12 @@ WORKDIR /app
 COPY requirements.txt ./tiktok-uploader/ install_tiktok_uploader.bash ./
 
 # Create and use a virtual environment
-RUN python3 -m venv venv
-RUN ./venv/bin/python -m pip install -r requirements.txt
+# RUN python3 -m venv venv
+RUN python3 -m pip install -r requirements.txt --break-system-packages
 RUN ./install_tiktok_uploader.bash
 
 # Copy the rest of the application code
 COPY . .
 
 # Run the main.py script
-CMD ["./venv/bin/python", "main.py"]
+# CMD ["python3", "main.py"]
