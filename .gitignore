@@ -259,3 +259,5 @@ image_generation/assets
 *.mp4
 manim_temp.py
 *.mp3
+
+cookies.txt

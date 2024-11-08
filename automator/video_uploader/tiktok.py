@@ -9,7 +9,9 @@ class TikTokUploader(VideoUploader):
         self.auth = AuthBackend(cookies=cookies_path)
 
     def upload(self, video_path: str) -> None:
-        tiktok.upload_videos(videos=[{"video_path": video_path}], auth=self.auth)
+        tiktok.upload_videos(
+            videos=[{"video_path": video_path}], browser="firefox", auth=self.auth
+        )
 
     def upload_multiple(self, video_paths: list[str]) -> None:
         tiktok.upload_videos(video_paths, self.auth)
