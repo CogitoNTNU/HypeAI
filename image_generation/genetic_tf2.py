@@ -247,51 +247,16 @@ def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
 
 
 # @tf.function
-def translate_tensor_image_batch(images: tf.Tensor, translations: tf.Tensor) -> tf.Tensor:
+def translate_tensor_image_batch(images, translations):
     start_time = tf.timestamp()
-
-    batch_size = tf.shape(images)[0]
-
-    # Prepare tensors for broadcasting
-    zeros = tf.zeros([batch_size], dtype=tf.float32)
-    ones = tf.ones([batch_size], dtype=tf.float32)
-
-    # Extract dx and dy translations and cast to float32
-    dx = tf.cast(translations[:, 0], tf.float32)
-    dy = tf.cast(translations[:, 1], tf.float32)
-
-    # Create translation matrices
-    translation_matrices = tf.transpose(
-        tf.stack([
-            tf.stack([ones, zeros, -dx], axis=0),
-            tf.stack([zeros, ones, -dy], axis=0),
-            tf.stack([zeros, zeros, ones], axis=0)
-        ], axis=0),
-        perm=[2, 0, 1]
-    )  # Shape: [batch_size, 3, 3]
-
-    # Since we're only translating, the transformation is just the translation matrix
-    # Extract the 2x3 affine matrix for each image in the batch
-    affine_matrices = translation_matrices[:, :2, :]  # Shape: [batch_size, 2, 3]
-
-    # Flatten affine matrices to shape [batch_size, 6]
-    affine_matrices_flat = tf.reshape(affine_matrices, [batch_size, 6])
-
-    # Append [0, 0] to each affine matrix to make it 8 elements
-    zeros_2 = tf.zeros([batch_size, 2], dtype=tf.float32)
-    transformation_matrices = tf.concat([affine_matrices_flat, zeros_2], axis=1)  # Shape: [batch_size, 8]
-
-    # Apply affine transformations to each image in the batch
-    translated_images = tf.raw_ops.ImageProjectiveTransformV2(
-        images=images,
-        transforms=transformation_matrices,
-        output_shape=tf.shape(images)[1:3],
-        interpolation='BILINEAR'
+    translated_images = tf.map_fn(
+        lambda x: tf.roll(x[0], shift=[x[1][1], x[1][0]], axis=[0, 1]),
+        (images, translations),
+        fn_output_signature=images.dtype
     )
-
     end_time = tf.timestamp()
     tf.print("translate_tensor_image_batch took", end_time - start_time, "seconds")
-
+    
     return translated_images
 
 
