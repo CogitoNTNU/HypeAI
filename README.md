@@ -114,7 +114,7 @@ This project would not have been possible without the hard work and dedication o
             </a>
         </td>
         -->
-    </tr>
+    </**tr**>
 </table>
 
 ![Group picture](docs/img/team.png)
