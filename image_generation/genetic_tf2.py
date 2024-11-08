@@ -5,9 +5,8 @@ from PIL import Image
 from pathlib import Path
 from utils import load_img_from_url
 
-
-NUM_PLACED_OBJECTS = 1
-BATCH_SIZE = 200
+NUM_PLACED_OBJECTS = 3
+BATCH_SIZE = 100
 
 MIN_SCALE = 0.1
 MAX_SCALE = 5
@@ -21,7 +20,6 @@ NUM_CHILDREN = (BATCH_SIZE - NUM_SURVIVORS) // NUM_SURVIVORS
 
 IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
 ASSETS_PATH = Path("./assets/")
-
 
 # Get the number of available CPU cores
 max_threads = multiprocessing.cpu_count()
@@ -95,9 +93,10 @@ def load_assets_with_padding(path: Path, width: int, height: int) -> tf.Tensor:
     return tf.stack(padded_assets, axis=0)
 
 
-@tf.function
+# @tf.function
 def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor:
     """Rotate a batch of image tensors by arbitrary angles (in radians) around their centers."""
+    start_time = tf.timestamp()
     # Ensure images and angles are in the correct shape
     batch_size = tf.shape(images)[0]
     image_height = tf.cast(tf.shape(images)[1], tf.float32)
@@ -166,74 +165,91 @@ def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor
         interpolation="BILINEAR"
     )
 
+    end_time = tf.timestamp()
+    tf.print("rotate_tensor_image_batch took", end_time - start_time, "seconds")
+
     return rotated_images
 
 
-@tf.function
+# @tf.function
 def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
-    """
-    Scales each image in the batch from the center according to its corresponding scale factor,
-    keeping the output dimensions the same as the input dimensions.
+    """Scale a batch of image tensors by arbitrary factors around their centers."""
+    start_time = tf.timestamp()
+    # Ensure images and scales are in the correct shape
+    batch_size = tf.shape(images)[0]
+    image_height = tf.cast(tf.shape(images)[1], tf.float32)
+    image_width = tf.cast(tf.shape(images)[2], tf.float32)
 
-    Args:
-        images (tf.Tensor): A 4D tensor of shape [batch_size, height, width, channels].
-        scales (tf.Tensor): A 1D tensor of shape [batch_size] representing the scaling factors for each image.
+    # Compute the center of each image
+    image_center_y = image_height / 2.0
+    image_center_x = image_width / 2.0
 
-    Returns:
-        tf.Tensor: A 4D tensor of the same shape as `images`, with each image scaled according to `scales`.
-    """
-    def scale_single_image(image, scale_factor):
-        orig_height, orig_width = tf.shape(image)[0], tf.shape(image)[1]
+    # Prepare tensors for broadcasting
+    zeros = tf.zeros([batch_size], dtype=tf.float32)
+    ones = tf.ones([batch_size], dtype=tf.float32)
 
-        # Calculate the new height and width based on the scale factor
-        new_height = tf.cast(tf.cast(orig_height, tf.float32) * scale_factor, tf.int32)
-        new_width = tf.cast(tf.cast(orig_width, tf.float32) * scale_factor, tf.int32)
+    # Create translation to origin matrices
+    translate_to_origin = tf.transpose(
+        tf.stack([
+            tf.stack([ones, zeros, -image_center_x * ones], axis=0),
+            tf.stack([zeros, ones, -image_center_y * ones], axis=0),
+            tf.stack([zeros, zeros, ones], axis=0)
+        ], axis=0),
+        perm=[2, 0, 1]
+    )  # Shape: [batch_size, 3, 3]
 
-        # Resize the image to the new dimensions
-        resized_image = tf.image.resize(image, [new_height, new_width], method='bilinear')
+    # Create scaling matrices
+    scales_inv = 1 / scales  # Invert scales because image transformation uses inverse mapping
+    scaling = tf.transpose(
+        tf.stack([
+            tf.stack([scales_inv, zeros, zeros], axis=0),
+            tf.stack([zeros, scales_inv, zeros], axis=0),
+            tf.stack([zeros, zeros, ones], axis=0)
+        ], axis=0),
+        perm=[2, 0, 1]
+    )  # Shape: [batch_size, 3, 3]
 
-        # Calculate offsets for cropping or padding
-        offset_height = (new_height - orig_height) // 2
-        offset_width = (new_width - orig_width) // 2
+    # Create translation back matrices
+    translate_back = tf.transpose(
+        tf.stack([
+            tf.stack([ones, zeros, image_center_x * ones], axis=0),
+            tf.stack([zeros, ones, image_center_y * ones], axis=0),
+            tf.stack([zeros, zeros, ones], axis=0)
+        ], axis=0),
+        perm=[2, 0, 1]
+    )  # Shape: [batch_size, 3, 3]
 
-        # Center-crop if scaled image is larger than original
-        if scale_factor > 1.0:
-            cropped_image = tf.image.crop_to_bounding_box(
-                resized_image,
-                offset_height,
-                offset_width,
-                orig_height,
-                orig_width
-            )
-            return cropped_image
+    # Combine transformations for each image in the batch
+    transform = tf.linalg.matmul(tf.linalg.matmul(translate_back, scaling), translate_to_origin)
 
-        # Pad if scaled image is smaller than original
-        else:
-            pad_top = -offset_height
-            pad_bottom = orig_height - new_height - pad_top
-            pad_left = -offset_width
-            pad_right = orig_width - new_width - pad_left
-            padded_image = tf.image.pad_to_bounding_box(
-                resized_image,
-                pad_top,
-                pad_left,
-                orig_height,
-                orig_width
-            )
-            return padded_image
+    # Extract the 2x3 affine matrix for each image in the batch
+    affine_matrices = transform[:, :2, :]  # Shape: [batch_size, 2, 3]
 
-    # Use tf.map_fn to apply scale_single_image to each image in the batch
-    scaled_images = tf.map_fn(
-        lambda x: scale_single_image(x[0], x[1]),
-        (images, scales),
-        fn_output_signature=tf.float32
+    # Flatten affine matrices to shape [batch_size, 6]
+    affine_matrices_flat = tf.reshape(affine_matrices, [batch_size, 6])
+
+    # Append [0, 0] to each affine matrix to make it 8 elements
+    zeros_2 = tf.zeros([batch_size, 2], dtype=tf.float32)
+    transformation_matrices = tf.concat([affine_matrices_flat, zeros_2], axis=1)  # Shape: [batch_size, 8]
+
+    # Apply affine transformations to each image in the batch
+    scaled_images = tf.raw_ops.ImageProjectiveTransformV2(
+        images=images,
+        transforms=transformation_matrices,
+        output_shape=tf.shape(images)[1:3],
+        interpolation="BILINEAR"
     )
+
+    end_time = tf.timestamp()
+    tf.print("scale_tensor_image_batch took", end_time - start_time, "seconds")
 
     return scaled_images
 
 
-@tf.function
+# @tf.function
 def translate_tensor_image_batch(images: tf.Tensor, translations: tf.Tensor) -> tf.Tensor:
+    start_time = tf.timestamp()
+
     batch_size = tf.shape(images)[0]
 
     # Prepare tensors for broadcasting
@@ -273,23 +289,27 @@ def translate_tensor_image_batch(images: tf.Tensor, translations: tf.Tensor) -> 
         interpolation='BILINEAR'
     )
 
+    end_time = tf.timestamp()
+    tf.print("translate_tensor_image_batch took", end_time - start_time, "seconds")
+
     return translated_images
 
 
-@tf.function
+# @tf.function
 def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: tf.Tensor) -> tf.Tensor:
     """
     For each image in the batch, replace the RGB values in the regions where alpha > 0
     with the average color from the corresponding regions in images_rgb.
     """
+    start_time = tf.timestamp()
     # Ensure images are of type float32
     images_with_alpha = tf.cast(images_with_alpha, dtype=tf.float32)
     images_rgb = tf.cast(images_rgb, dtype=tf.float32)
 
-    # Get dynamic shapes
-    batch_size = tf.shape(images_with_alpha)[0]
-    height = tf.shape(images_with_alpha)[1]
-    width = tf.shape(images_with_alpha)[2]
+    # Ensure the images have the same dimensions
+    # assert images_with_alpha.shape[:3] == images_rgb.shape[:3], "Image dimensions must match"
+
+    batch_size, height, width = images_with_alpha.shape[:3]
 
     # Create the mask where alpha > 0
     mask = images_with_alpha[..., 3] > 0  # Shape: [batch_size, height, width]
@@ -322,12 +342,16 @@ def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: 
     alpha_channel = images_with_alpha[..., 3:]  # Shape: [batch_size, height, width, 1]
     output_image = tf.concat([new_rgb, alpha_channel], axis=-1)  # Shape: [batch_size, height, width, 4]
 
+    end_time = tf.timestamp()
+    tf.print("apply_avg_color_to_masked_regions took", end_time - start_time, "seconds")
+
     return output_image
 
 
-@tf.function
+# @tf.function
 def overlay_images_batch(background: tf.Tensor, overlays: tf.Tensor) -> tf.Tensor:
     # Expand background to match the batch size of overlays
+    start_time = tf.timestamp()
     batch_size = tf.shape(overlays)[0]
     background_batch = tf.broadcast_to(background, [batch_size, *background.shape])
 
@@ -338,20 +362,28 @@ def overlay_images_batch(background: tf.Tensor, overlays: tf.Tensor) -> tf.Tenso
     # Blend overlay RGB with background using alpha
     result = (alpha_channel * overlay_rgb) + ((1 - alpha_channel) * background_batch)
 
+    end_time = tf.timestamp()
+    tf.print("overlay_images_batch took", end_time - start_time, "seconds")
+
     return tf.cast(result, background.dtype)
 
 
-@tf.function
+# @tf.function
 def select_images_by_indices(tensor_batch: tf.Tensor, indices: tf.Tensor) -> tf.Tensor:
+    start_time = tf.timestamp()
     
     # Gather images based on the indexes
     selected_images = tf.gather(tensor_batch, indices, axis=0)
+
+    end_time = tf.timestamp()
+    tf.print("select_images_by_indices took", end_time - start_time, "seconds")
     
     return selected_images
 
 
-@tf.function
+# @tf.function
 def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tensor:
+    start_time = tf.timestamp()
     # Ensure both tensors are in the same integer data type
     curr_tensor_rgb = tf.cast(curr_tensor[..., :3], tf.int32)  # Only take RGB channels
     ref_tensor = tf.cast(ref_tensor, tf.int32)
@@ -359,12 +391,16 @@ def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tenso
     # Calculate the absolute difference and sum over all pixel values for each image in the batch
     compare_scores = tf.reduce_sum(tf.abs(curr_tensor_rgb - ref_tensor), axis=[1, 2, 3])
 
+    end_time = tf.timestamp()
+    tf.print("get_compare_score took", end_time - start_time, "seconds")
+
     # Output is a 1D tensor of shape [batch_size] with one score per image pair
     return compare_scores
 
 
-@tf.function
+# @tf.function
 def generate_population_tensor(size: tf.Tensor, min_x: tf.Tensor, max_x: tf.Tensor, min_y: tf.Tensor, max_y: tf.Tensor, min_scale: tf.Tensor, max_scale: tf.Tensor, index_range: tf.Tensor):
+    start_time = tf.timestamp()
     # Generate each attribute as a tensor
     x = tf.random.uniform([size], min_x, max_x, dtype=tf.int32)
     y = tf.random.uniform([size], min_y, max_y, dtype=tf.int32)
@@ -378,10 +414,16 @@ def generate_population_tensor(size: tf.Tensor, min_x: tf.Tensor, max_x: tf.Tens
                                   angle,
                                   scale, 
                                   tf.cast(index, tf.float32)], axis=1)
+    
+    end_time = tf.timestamp()
+    tf.print("generate_population_tensor took", end_time - start_time, "seconds")
+    
     return population_tensor
 
 
+# @tf.function
 def generate_population_imgs(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
+    start_time = tf.timestamp()
     # Split the population_tensor into individual attribute tensors
     x, y, angle, scale, index = tf.split(population_tensor, num_or_size_splits=5, axis=1)
 
@@ -405,15 +447,20 @@ def generate_population_imgs(population_tensor: tf.Tensor, assets: tf.Tensor, cu
     # Overlay the population assets onto the current image batch
     next_images_batch = overlay_images_batch(curr_img, population_assets)
 
+    end_time = tf.timestamp()
+    tf.print("generate_population_imgs took", end_time - start_time, "seconds")
+
     return next_images_batch
 
 
-@tf.function
+# @tf.function
 def update_population(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor, 
                       num_survivors: tf.Tensor, num_children: tf.Tensor, 
                       translation_mutation_range: tf.Tensor, 
                       angle_mutation_range: tf.Tensor, 
                       scale_mutation_range: tf.Tensor) -> tf.Tensor:
+    
+    start_time = tf.timestamp()
     
     # Generate images and compute comparison scores
     next_images_batch = generate_population_imgs(population_tensor, assets, curr_img, ref_img)
@@ -440,12 +487,16 @@ def update_population(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img:
     
     # Combine survivors and mutated children to form the new population tensor
     new_population_tensor = tf.concat([survivors, mutated_children], axis=0)
+
+    end_time = tf.timestamp()
+    tf.print("update_population took", end_time - start_time, "seconds")
     
     return new_population_tensor
 
 
-@tf.function
+# @tf.function
 def get_best_fit(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
+    start_time = tf.timestamp()
     # Generate images for the current population and compute comparison scores
     next_images_batch = generate_population_imgs(population_tensor, assets, curr_img, ref_img)
     compare_scores = get_compare_score(next_images_batch, ref_img)
@@ -455,6 +506,9 @@ def get_best_fit(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.T
     
     # Return the best-fit image from the batch
     best_fit_image = tf.gather(next_images_batch, best_index)
+
+    end_time = tf.timestamp()
+    tf.print("get_best_fit took", end_time - start_time, "seconds\n\n\n#################\n\n\n")
     
     return best_fit_image
 
@@ -489,6 +543,7 @@ scale_mutation_range = tf.constant(SCALE_MUTATION_RANGE, dtype=tf.float32)
 for i in range(NUM_PLACED_OBJECTS):
     print(f"{i} / {NUM_PLACED_OBJECTS}")
     population = generate_population_tensor(batch_size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range)
+    population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     curr_tensor_img = get_best_fit(population, assets, curr_tensor_img, tensor_img)
 
