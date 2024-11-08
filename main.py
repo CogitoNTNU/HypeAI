@@ -13,12 +13,11 @@ def main():
 
     uploader = TikTokUploader("./automator/cookies.txt")
     automator.add_video_uploader(uploader)
-
-    automator.add_video_uploader(MockUploader())
     automator.add_video_generator(MockGenerator())
 
     automator.generate_videos()
     automator.upload_random_video()
+
 
 if __name__ == "__main__":
     main()
