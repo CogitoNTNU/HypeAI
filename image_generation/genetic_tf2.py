@@ -96,12 +96,6 @@ def load_assets_with_padding(path: Path, width: int, height: int) -> tf.Tensor:
 
 
 @tf.function
-def create_tile_batch(tensor: tf.Tensor, size: int) -> tf.Tensor:
-    tensor = tf.expand_dims(tensor, axis=0)
-    return tf.tile(tensor, [size, 1, 1, 1])
-
-
-@tf.function
 def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor:
     """Rotate a batch of image tensors by arbitrary angles (in radians) around their centers."""
     # Ensure images and angles are in the correct shape
@@ -177,70 +171,62 @@ def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor
 
 @tf.function
 def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
-    """Scale a batch of image tensors by arbitrary factors around their centers."""
-    # Ensure images and scales are in the correct shape
-    batch_size = tf.shape(images)[0]
-    image_height = tf.cast(tf.shape(images)[1], tf.float32)
-    image_width = tf.cast(tf.shape(images)[2], tf.float32)
+    """
+    Scales each image in the batch from the center according to its corresponding scale factor,
+    keeping the output dimensions the same as the input dimensions.
 
-    # Compute the center of each image
-    image_center_y = image_height / 2.0
-    image_center_x = image_width / 2.0
+    Args:
+        images (tf.Tensor): A 4D tensor of shape [batch_size, height, width, channels].
+        scales (tf.Tensor): A 1D tensor of shape [batch_size] representing the scaling factors for each image.
 
-    # Prepare tensors for broadcasting
-    zeros = tf.zeros([batch_size], dtype=tf.float32)
-    ones = tf.ones([batch_size], dtype=tf.float32)
+    Returns:
+        tf.Tensor: A 4D tensor of the same shape as `images`, with each image scaled according to `scales`.
+    """
+    def scale_single_image(image, scale_factor):
+        orig_height, orig_width = tf.shape(image)[0], tf.shape(image)[1]
 
-    # Create translation to origin matrices
-    translate_to_origin = tf.transpose(
-        tf.stack([
-            tf.stack([ones, zeros, -image_center_x * ones], axis=0),
-            tf.stack([zeros, ones, -image_center_y * ones], axis=0),
-            tf.stack([zeros, zeros, ones], axis=0)
-        ], axis=0),
-        perm=[2, 0, 1]
-    )  # Shape: [batch_size, 3, 3]
+        # Calculate the new height and width based on the scale factor
+        new_height = tf.cast(tf.cast(orig_height, tf.float32) * scale_factor, tf.int32)
+        new_width = tf.cast(tf.cast(orig_width, tf.float32) * scale_factor, tf.int32)
 
-    # Create scaling matrices
-    scales_inv = 1 / scales  # Invert scales because image transformation uses inverse mapping
-    scaling = tf.transpose(
-        tf.stack([
-            tf.stack([scales_inv, zeros, zeros], axis=0),
-            tf.stack([zeros, scales_inv, zeros], axis=0),
-            tf.stack([zeros, zeros, ones], axis=0)
-        ], axis=0),
-        perm=[2, 0, 1]
-    )  # Shape: [batch_size, 3, 3]
+        # Resize the image to the new dimensions
+        resized_image = tf.image.resize(image, [new_height, new_width], method='bilinear')
 
-    # Create translation back matrices
-    translate_back = tf.transpose(
-        tf.stack([
-            tf.stack([ones, zeros, image_center_x * ones], axis=0),
-            tf.stack([zeros, ones, image_center_y * ones], axis=0),
-            tf.stack([zeros, zeros, ones], axis=0)
-        ], axis=0),
-        perm=[2, 0, 1]
-    )  # Shape: [batch_size, 3, 3]
+        # Calculate offsets for cropping or padding
+        offset_height = (new_height - orig_height) // 2
+        offset_width = (new_width - orig_width) // 2
 
-    # Combine transformations for each image in the batch
-    transform = tf.linalg.matmul(tf.linalg.matmul(translate_back, scaling), translate_to_origin)
+        # Center-crop if scaled image is larger than original
+        if scale_factor > 1.0:
+            cropped_image = tf.image.crop_to_bounding_box(
+                resized_image,
+                offset_height,
+                offset_width,
+                orig_height,
+                orig_width
+            )
+            return cropped_image
 
-    # Extract the 2x3 affine matrix for each image in the batch
-    affine_matrices = transform[:, :2, :]  # Shape: [batch_size, 2, 3]
+        # Pad if scaled image is smaller than original
+        else:
+            pad_top = -offset_height
+            pad_bottom = orig_height - new_height - pad_top
+            pad_left = -offset_width
+            pad_right = orig_width - new_width - pad_left
+            padded_image = tf.image.pad_to_bounding_box(
+                resized_image,
+                pad_top,
+                pad_left,
+                orig_height,
+                orig_width
+            )
+            return padded_image
 
-    # Flatten affine matrices to shape [batch_size, 6]
-    affine_matrices_flat = tf.reshape(affine_matrices, [batch_size, 6])
-
-    # Append [0, 0] to each affine matrix to make it 8 elements
-    zeros_2 = tf.zeros([batch_size, 2], dtype=tf.float32)
-    transformation_matrices = tf.concat([affine_matrices_flat, zeros_2], axis=1)  # Shape: [batch_size, 8]
-
-    # Apply affine transformations to each image in the batch
-    scaled_images = tf.raw_ops.ImageProjectiveTransformV2(
-        images=images,
-        transforms=transformation_matrices,
-        output_shape=tf.shape(images)[1:3],
-        interpolation="BILINEAR"
+    # Use tf.map_fn to apply scale_single_image to each image in the batch
+    scaled_images = tf.map_fn(
+        lambda x: scale_single_image(x[0], x[1]),
+        (images, scales),
+        fn_output_signature=tf.float32
     )
 
     return scaled_images
@@ -300,10 +286,10 @@ def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: 
     images_with_alpha = tf.cast(images_with_alpha, dtype=tf.float32)
     images_rgb = tf.cast(images_rgb, dtype=tf.float32)
 
-    # Ensure the images have the same dimensions
-    # assert images_with_alpha.shape[:3] == images_rgb.shape[:3], "Image dimensions must match"
-
-    batch_size, height, width = images_with_alpha.shape[:3]
+    # Get dynamic shapes
+    batch_size = tf.shape(images_with_alpha)[0]
+    height = tf.shape(images_with_alpha)[1]
+    width = tf.shape(images_with_alpha)[2]
 
     # Create the mask where alpha > 0
     mask = images_with_alpha[..., 3] > 0  # Shape: [batch_size, height, width]
@@ -377,17 +363,8 @@ def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tenso
     return compare_scores
 
 
-def generate_population_tensor(size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range):
-    # Convert Python scalars to TensorFlow constants
-    size = tf.constant(size, dtype=tf.int32)
-    min_x = tf.constant(min_x, dtype=tf.int32)
-    max_x = tf.constant(max_x, dtype=tf.int32)
-    min_y = tf.constant(min_y, dtype=tf.int32)
-    max_y = tf.constant(max_y, dtype=tf.int32)
-    min_scale = tf.constant(min_scale, dtype=tf.float32)
-    max_scale = tf.constant(max_scale, dtype=tf.float32)
-    index_range = tf.constant(index_range, dtype=tf.int32)
-
+@tf.function
+def generate_population_tensor(size: tf.Tensor, min_x: tf.Tensor, max_x: tf.Tensor, min_y: tf.Tensor, max_y: tf.Tensor, min_scale: tf.Tensor, max_scale: tf.Tensor, index_range: tf.Tensor):
     # Generate each attribute as a tensor
     x = tf.random.uniform([size], min_x, max_x, dtype=tf.int32)
     y = tf.random.uniform([size], min_y, max_y, dtype=tf.int32)
