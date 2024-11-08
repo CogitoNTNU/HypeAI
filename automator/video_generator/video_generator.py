@@ -1,10 +1,9 @@
-from abc import ABC, abstractmethod
+from typing import Protocol
 
 
-class VideoGenerator(ABC):
-    @abstractmethod
+class VideoGenerator(Protocol):
     def generate(self, output_path: str) -> None:
         """
         Generates a video and returns the path to the generated video
         """
-        pass
+        ...

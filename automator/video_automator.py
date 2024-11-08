@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import os
+import random
 from automator.video_uploader import VideoUploader
 from automator.video_generator import VideoGenerator
 
@@ -21,11 +22,19 @@ class VideoAutomator:
         for video_generator in self.video_generators:
             video_generator.generate(output_path=OUTPUT_PATH)
 
-    def upload_videos(self) -> None:
-        for video in os.listdir(OUTPUT_PATH):
-            for video_uploader in self.video_uploaders:
-                video_uploader.upload(video_path=os.path.join(OUTPUT_PATH, video))
+    def upload_random_video(self) -> None:
+        videos = os.listdir(OUTPUT_PATH)
+        if not videos:
+            print("No videos to upload")
+            return
 
-    def clear_output_folder(self) -> None:
-        for video in os.listdir(OUTPUT_PATH):
-            os.remove(os.path.join(OUTPUT_PATH, video))
+        video = random.choice(videos)
+        for video_uploader in self.video_uploaders:
+            video_uploader.upload(video_path=os.path.join(OUTPUT_PATH, video))
+            self.remove_video(os.path.join(OUTPUT_PATH, video))
+
+    def has_videos(self) -> bool:
+        return bool(os.listdir(OUTPUT_PATH))
+
+    def remove_video(self, video_path: str) -> None:
+        os.remove(video_path)

@@ -7,6 +7,10 @@ from automator.video_generator import MockGenerator
 def main():
     automator = VideoAutomator()
 
+    if automator.has_videos():
+        automator.upload_random_video()
+        return
+
     uploader = TikTokUploader("./automator/cookies.txt")
     automator.add_video_uploader(uploader)
 
@@ -14,11 +18,7 @@ def main():
     automator.add_video_generator(MockGenerator())
 
     automator.generate_videos()
-    automator.upload_videos()
-
-    print("Clearing output folder...")
-    # automator.clear_output_folder()
-
+    automator.upload_random_video()
 
 if __name__ == "__main__":
     main()
