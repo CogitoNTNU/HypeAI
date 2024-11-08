@@ -1,20 +1,39 @@
 import tensorflow as tf
 import numpy as np
-import copy
+import multiprocessing
 from PIL import Image
 from pathlib import Path
 from utils import load_img_from_url
 
+
+NUM_PLACED_OBJECTS = 1
 BATCH_SIZE = 200
+
 MIN_SCALE = 0.1
 MAX_SCALE = 5
+
+TRANSLATION_MUTATION_RANGE = 10
+ANGLE_MUTATION_RANGE = 0.5
+SCALE_MUTATION_RANGE = 0.5
+
+NUM_SURVIVORS = 10
+NUM_CHILDREN = (BATCH_SIZE - NUM_SURVIVORS) // NUM_SURVIVORS
 
 IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
 ASSETS_PATH = Path("./assets/")
 
 
+# Get the number of available CPU cores
+max_threads = multiprocessing.cpu_count()
+
+# Set TensorFlow to use the maximum number of threads
+tf.config.threading.set_intra_op_parallelism_threads(max_threads)
+tf.config.threading.set_inter_op_parallelism_threads(max_threads)
+
+
 def img_to_tensor(img: Image) -> tf.Tensor:
-    return tf.convert_to_tensor(np.array(img))
+    tensor = tf.convert_to_tensor(np.array(img))
+    return tensor
 
 
 def tensor_to_img(tensor: tf.Tensor) -> Image.Image:
@@ -79,11 +98,7 @@ def load_assets_with_padding(path: Path, width: int, height: int) -> tf.Tensor:
 @tf.function
 def create_tile_batch(tensor: tf.Tensor, size: int) -> tf.Tensor:
     tensor = tf.expand_dims(tensor, axis=0)
-    
-    # Tile the image along the batch dimension
-    batch_tensor = tf.tile(tensor, [size, 1, 1, 1])
-
-    return batch_tensor
+    return tf.tile(tensor, [size, 1, 1, 1])
 
 
 @tf.function
@@ -362,76 +377,112 @@ def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tenso
     return compare_scores
 
 
-class Object():
-    def __init__(self, min_x: int, max_x: int, min_y: int, max_y: int, min_scale: float, max_scale: float, index_range: int):
-        self.x = np.random.randint(min_x, max_x)
-        self.y = np.random.randint(min_y, max_y)
-        self.angle = np.random.uniform(0, 2*np.pi)
-        self.scale = np.random.uniform(min_scale, max_scale)
-        self.index = np.random.randint(0, index_range)
+def generate_population_tensor(size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range):
+    # Convert Python scalars to TensorFlow constants
+    size = tf.constant(size, dtype=tf.int32)
+    min_x = tf.constant(min_x, dtype=tf.int32)
+    max_x = tf.constant(max_x, dtype=tf.int32)
+    min_y = tf.constant(min_y, dtype=tf.int32)
+    max_y = tf.constant(max_y, dtype=tf.int32)
+    min_scale = tf.constant(min_scale, dtype=tf.float32)
+    max_scale = tf.constant(max_scale, dtype=tf.float32)
+    index_range = tf.constant(index_range, dtype=tf.int32)
+
+    # Generate each attribute as a tensor
+    x = tf.random.uniform([size], min_x, max_x, dtype=tf.int32)
+    y = tf.random.uniform([size], min_y, max_y, dtype=tf.int32)
+    angle = tf.random.uniform([size], 0, 2 * tf.constant(np.pi))
+    scale = tf.random.uniform([size], min_scale, max_scale)
+    index = tf.random.uniform([size], 0, index_range, dtype=tf.int32)
+
+    # Stack them into a single tensor with shape [size, 5] (5 attributes per individual)
+    population_tensor = tf.stack([tf.cast(x, tf.float32), 
+                                  tf.cast(y, tf.float32), 
+                                  angle,
+                                  scale, 
+                                  tf.cast(index, tf.float32)], axis=1)
+    return population_tensor
 
 
-    def mutate(self, grandness_of_translation_mutation: int, grandness_of_angle_mutation: float, grandess_of_scale_mutation: float):
-        self.x += np.random.randint(-grandness_of_translation_mutation, grandness_of_translation_mutation)
-        self.y += np.random.randint(-grandness_of_translation_mutation, grandness_of_translation_mutation)
-        self.angle += np.random.uniform(-grandness_of_angle_mutation, grandness_of_angle_mutation)
-        self.scale += np.random.uniform(-grandess_of_scale_mutation, grandess_of_scale_mutation)
+def generate_population_imgs(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
+    # Split the population_tensor into individual attribute tensors
+    x, y, angle, scale, index = tf.split(population_tensor, num_or_size_splits=5, axis=1)
 
+    # Gather the assets based on the `index`
+    index = tf.cast(tf.squeeze(index, axis=-1), tf.int32)  # Ensure index is 1D and of integer type
+    population_assets = tf.gather(assets, index)
 
+    # Rotate the assets based on `angle`
+    population_assets = rotate_tensor_image_batch(population_assets, tf.squeeze(angle, axis=-1))
 
-def generate_random_population(size: int, min_x: int, max_x: int, min_y: int, max_y: int, min_scale: float, max_scale: float, index_range: int) -> list[Object]:
-    return [Object(min_x, max_x, min_y, max_y, min_scale, max_scale, index_range) for i in range(size)]
+    # Scale the assets based on `scale`
+    population_assets = scale_tensor_image_batch(population_assets, tf.squeeze(scale, axis=-1))
 
+    # Translate the assets based on `x` and `y`
+    population_translations = tf.concat([x, y], axis=1)  # Combine x and y into a 2D tensor for translation
+    population_assets = translate_tensor_image_batch(population_assets, tf.cast(population_translations, tf.int32))
 
-def generate_population_imgs(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
-    population_indices = tf.constant([obj.index for obj in population])
-    population_translations = tf.constant([[obj.x, obj.y] for obj in population])
-    population_angles = tf.constant([obj.angle for obj in population])
-    population_scales = tf.constant([obj.scale for obj in population])
-
-    population_assets = tf.gather(assets, population_indices)
-    population_assets = rotate_tensor_image_batch(population_assets, population_angles)
-    population_assets = scale_tensor_image_batch(population_assets, population_scales)
-    population_assets = translate_tensor_image_batch(population_assets, population_translations)
+    # Apply average color to masked regions
     population_assets = apply_avg_color_to_masked_regions(population_assets, ref_img)
 
+    # Overlay the population assets onto the current image batch
     next_images_batch = overlay_images_batch(curr_img, population_assets)
 
     return next_images_batch
 
 
-
-def update_population(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor, num_survivors: int, num_children: int, grandness_of_translation_mutation: int, grandness_of_angle_mutation: float, grandness_of_scale_mutation: float):
-    next_images_batch = generate_population_imgs(population, assets, curr_img, ref_img)
-
-    compare_scores = get_compare_score(next_images_batch, ref_img)
-
-    survivor_indices = tf.argsort(compare_scores, direction='ASCENDING')[:num_survivors]
-
-    survivors: list[Object] = [population[i] for i in survivor_indices]
-
-    for i in range(num_survivors):
-        for j in range(num_children):
-            child = copy.deepcopy(survivors[i])
-            child.mutate(grandness_of_translation_mutation, grandness_of_angle_mutation, grandness_of_scale_mutation)
-            population.append(child)
+@tf.function
+def update_population(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor, 
+                      num_survivors: tf.Tensor, num_children: tf.Tensor, 
+                      translation_mutation_range: tf.Tensor, 
+                      angle_mutation_range: tf.Tensor, 
+                      scale_mutation_range: tf.Tensor) -> tf.Tensor:
     
-    return survivors
-
-
-def get_best_fit(population: list[Object], assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor):
-    next_images_batch = generate_population_imgs(population, assets, curr_img, ref_img)
-
+    # Generate images and compute comparison scores
+    next_images_batch = generate_population_imgs(population_tensor, assets, curr_img, ref_img)
     compare_scores = get_compare_score(next_images_batch, ref_img)
+    
+    # Select the top survivors based on comparison scores
+    survivor_indices = tf.argsort(compare_scores, direction='ASCENDING')[:num_survivors]
+    survivors = tf.gather(population_tensor, survivor_indices)
+    
+    # Create children by tiling survivors, casting num_children to int32
+    children = tf.tile(survivors, [int(num_children), 1])
+    
+    # Mutate only the children
+    x, y, angle, scale, index = tf.split(children, num_or_size_splits=5, axis=1)
+    
+    # Apply mutations
+    x_mutated = x + tf.random.uniform(tf.shape(x), -translation_mutation_range, translation_mutation_range, dtype=tf.float32)
+    y_mutated = y + tf.random.uniform(tf.shape(y), -translation_mutation_range, translation_mutation_range, dtype=tf.float32)
+    angle_mutated = angle + tf.random.uniform(tf.shape(angle), -angle_mutation_range, angle_mutation_range)
+    scale_mutated = scale + tf.random.uniform(tf.shape(scale), -scale_mutation_range, scale_mutation_range)
+    
+    # Concatenate mutated children attributes back together
+    mutated_children = tf.concat([x_mutated, y_mutated, angle_mutated, scale_mutated, index], axis=1)
+    
+    # Combine survivors and mutated children to form the new population tensor
+    new_population_tensor = tf.concat([survivors, mutated_children], axis=0)
+    
+    return new_population_tensor
 
-    best_index = tf.argsort(compare_scores, direction='ASCENDING')[0]
 
-    return next_images_batch[best_index]
-
+@tf.function
+def get_best_fit(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
+    # Generate images for the current population and compute comparison scores
+    next_images_batch = generate_population_imgs(population_tensor, assets, curr_img, ref_img)
+    compare_scores = get_compare_score(next_images_batch, ref_img)
+    
+    # Find the index of the best-fit individual (lowest score)
+    best_index = tf.argmin(compare_scores)
+    
+    # Return the best-fit image from the batch
+    best_fit_image = tf.gather(next_images_batch, best_index)
+    
+    return best_fit_image
 
 
 tensor_img = img_to_tensor(load_img_from_url(IMG_URL))
-tensor_batch = create_tile_batch(tensor_img, BATCH_SIZE)
 
 height, width = tensor_img.shape[:2]
 min_x = -width//2
@@ -443,12 +494,26 @@ curr_tensor_img = tf.zeros([height, width, 3], dtype=tf.float32)
 
 assets = load_assets_with_padding(ASSETS_PATH, width, height)
 
+batch_size = tf.constant(BATCH_SIZE, dtype=tf.int32)
+min_x = tf.constant(min_x, dtype=tf.int32)
+max_x = tf.constant(max_x, dtype=tf.int32)
+min_y = tf.constant(min_y, dtype=tf.int32)
+max_y = tf.constant(max_y, dtype=tf.int32)
+min_scale = tf.constant(MIN_SCALE, dtype=tf.float32)
+max_scale = tf.constant(MAX_SCALE, dtype=tf.float32)
+index_range = tf.constant(len(assets), dtype=tf.int32)
 
-for i in range(10):
-    print(f"{i} / 10")
-    population = generate_random_population(BATCH_SIZE, min_x, max_x, min_y, max_y, MIN_SCALE, MAX_SCALE, len(assets))
+num_survivors = tf.constant(NUM_SURVIVORS, dtype=tf.int32) 
+num_children = tf.constant(NUM_CHILDREN, dtype=tf.int32) 
+translation_mutation_range = tf.constant(TRANSLATION_MUTATION_RANGE, dtype=tf.float32) 
+angle_mutation_range = tf.constant(ANGLE_MUTATION_RANGE, dtype=tf.float32) 
+scale_mutation_range = tf.constant(SCALE_MUTATION_RANGE, dtype=tf.float32) 
+
+for i in range(NUM_PLACED_OBJECTS):
+    print(f"{i} / {NUM_PLACED_OBJECTS}")
+    population = generate_population_tensor(batch_size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range)
+    population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     curr_tensor_img = get_best_fit(population, assets, curr_tensor_img, tensor_img)
-
 
 
 img = tensor_to_img(curr_tensor_img)
