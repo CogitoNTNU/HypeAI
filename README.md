@@ -1,5 +1,5 @@
 <!-- TODO: CHANGE ALL INSTANCES OF "TEMPLATE-README" IN ENTIRE PROJECT TO YOUR PROJECT TITLE-->
-# TEMPLATE-README
+# Hype AI
 
 
 <div align="center">
@@ -17,9 +17,13 @@
 <details> 
 <summary><b>📋 Table of contents </b></summary>
 
-- [TEMPLATE-README](#template-readme)
+- [Hype AI](#hype-ai)
   - [Description](#description)
   - [Getting started](#getting-started)
+    - [Run using docker (prod):](#run-using-docker-prod)
+    - [Installation (development):](#installation-development)
+    - [Run (development)](#run-development)
+    - [Configuration](#configuration)
     - [Prerequisites](#prerequisites)
   - [Usage](#usage)
   - [Testing](#testing)
@@ -29,19 +33,42 @@
 </details>
 
 ## Description 
-<!-- TODO: Provide a brief overview of what this project does and its key features. Please add pictures or videos of the application -->
+HypeAI automates the creation and uploading of videos to social media like TikTok. The videos are generated using AI.
+
+Supported generator are:
+
+* Quiz Videos 🧠
+* Guess The Celebrity 🌟
+
+Supported uploaders are:
+
+* TikTok
+
 
 
 ## Getting started
-<!-- TODO: In this Section you describe how to install this project in its intended environment.(i.e. how to get it to run)  
--->
 
-For å starte prosjektet:
+### Run using docker (prod):
+```Bash
+make run
+```
+
+### Installation (development):
 ```Bash
 python -m venv venv
-pip install -r requirements.txt
 source venv/bin/activate
+pip install -r requirements.txt
+cd tiktok-uploader
+hatch build
+pip install -e .
+cd ..
 ```
+
+### Run (development)
+```Bash
+python main.py
+```
+### Configuration
 
 <!-- TODO: Describe how to configure the project (environment variables, config files, etc.).
 
@@ -55,12 +82,9 @@ MONGODB_URI = 'your_secret_key'
 -->
 
 ### Prerequisites
-<!-- TODO: In this section you put what is needed for the program to run.
-For example: OS version, programs, libraries, etc.  
-
--->
 - Ensure that git is installed on your machine. [Download Git](https://git-scm.com/downloads)
-
+- Make
+- Docker
 
 
 ## Usage
