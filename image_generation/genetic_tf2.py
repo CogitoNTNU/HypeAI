@@ -1,24 +1,26 @@
 import tensorflow as tf
 import numpy as np
+import cv2
 import multiprocessing
 from PIL import Image
 from pathlib import Path
 from utils import load_img_from_url
 
-NUM_PLACED_OBJECTS = 3
+NUM_PLACED_OBJECTS = 1000
 BATCH_SIZE = 100
 
-MIN_SCALE = 0.1
-MAX_SCALE = 5
+MIN_SCALE = 0.05
+MAX_SCALE = 2
 
-TRANSLATION_MUTATION_RANGE = 10
+TRANSLATION_MUTATION_RANGE = 20
 ANGLE_MUTATION_RANGE = 0.5
 SCALE_MUTATION_RANGE = 0.5
 
 NUM_SURVIVORS = 10
 NUM_CHILDREN = (BATCH_SIZE - NUM_SURVIVORS) // NUM_SURVIVORS
 
-IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
+# IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
+IMG_URL = "https://static.wikia.nocookie.net/silly-cat/images/f/fe/El_Gato.png/revision/latest/thumbnail/width/360/height/360?cb=20231010115301"
 ASSETS_PATH = Path("./assets/")
 
 # Get the number of available CPU cores
@@ -63,10 +65,11 @@ def load_assets_with_padding(path: Path, width: int, height: int) -> tf.Tensor:
 
     # First pass: load assets and calculate max width and height
     for file_path in path.iterdir():
-        if file_path.is_file():
-            img = Image.open(file_path).convert("RGBA")
-            asset = img_to_tensor(img)
-            assets.append(asset)
+        if file_path.is_file() and file_path.suffix.lower() == '.png':
+            with Image.open(file_path) as img:
+                img = img.convert("RGBA")
+                asset = img_to_tensor(img)
+                assets.append(asset)
 
 
     # Second pass: pad each asset to the maximum size
@@ -93,7 +96,7 @@ def load_assets_with_padding(path: Path, width: int, height: int) -> tf.Tensor:
     return tf.stack(padded_assets, axis=0)
 
 
-# @tf.function
+@tf.function
 def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor:
     """Rotate a batch of image tensors by arbitrary angles (in radians) around their centers."""
     start_time = tf.timestamp()
@@ -171,7 +174,7 @@ def rotate_tensor_image_batch(images: tf.Tensor, angles: tf.Tensor) -> tf.Tensor
     return rotated_images
 
 
-# @tf.function
+@tf.function
 def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
     """Scale a batch of image tensors by arbitrary factors around their centers."""
     start_time = tf.timestamp()
@@ -246,7 +249,7 @@ def scale_tensor_image_batch(images: tf.Tensor, scales: tf.Tensor) -> tf.Tensor:
     return scaled_images
 
 
-# @tf.function
+@tf.function
 def translate_tensor_image_batch(images, translations):
     start_time = tf.timestamp()
     translated_images = tf.map_fn(
@@ -260,7 +263,7 @@ def translate_tensor_image_batch(images, translations):
     return translated_images
 
 
-# @tf.function
+@tf.function
 def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: tf.Tensor) -> tf.Tensor:
     """
     For each image in the batch, replace the RGB values in the regions where alpha > 0
@@ -313,7 +316,7 @@ def apply_avg_color_to_masked_regions(images_with_alpha: tf.Tensor, images_rgb: 
     return output_image
 
 
-# @tf.function
+@tf.function
 def overlay_images_batch(background: tf.Tensor, overlays: tf.Tensor) -> tf.Tensor:
     # Expand background to match the batch size of overlays
     start_time = tf.timestamp()
@@ -333,7 +336,7 @@ def overlay_images_batch(background: tf.Tensor, overlays: tf.Tensor) -> tf.Tenso
     return tf.cast(result, background.dtype)
 
 
-# @tf.function
+@tf.function
 def select_images_by_indices(tensor_batch: tf.Tensor, indices: tf.Tensor) -> tf.Tensor:
     start_time = tf.timestamp()
     
@@ -346,7 +349,7 @@ def select_images_by_indices(tensor_batch: tf.Tensor, indices: tf.Tensor) -> tf.
     return selected_images
 
 
-# @tf.function
+@tf.function
 def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tensor:
     start_time = tf.timestamp()
     # Ensure both tensors are in the same integer data type
@@ -363,7 +366,7 @@ def get_compare_score(curr_tensor: tf.Tensor, ref_tensor: tf.Tensor) -> tf.Tenso
     return compare_scores
 
 
-# @tf.function
+@tf.function
 def generate_population_tensor(size: tf.Tensor, min_x: tf.Tensor, max_x: tf.Tensor, min_y: tf.Tensor, max_y: tf.Tensor, min_scale: tf.Tensor, max_scale: tf.Tensor, index_range: tf.Tensor):
     start_time = tf.timestamp()
     # Generate each attribute as a tensor
@@ -386,7 +389,7 @@ def generate_population_tensor(size: tf.Tensor, min_x: tf.Tensor, max_x: tf.Tens
     return population_tensor
 
 
-# @tf.function
+@tf.function
 def generate_population_imgs(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
     start_time = tf.timestamp()
     # Split the population_tensor into individual attribute tensors
@@ -418,7 +421,7 @@ def generate_population_imgs(population_tensor: tf.Tensor, assets: tf.Tensor, cu
     return next_images_batch
 
 
-# @tf.function
+@tf.function
 def update_population(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor, 
                       num_survivors: tf.Tensor, num_children: tf.Tensor, 
                       translation_mutation_range: tf.Tensor, 
@@ -459,7 +462,7 @@ def update_population(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img:
     return new_population_tensor
 
 
-# @tf.function
+@tf.function
 def get_best_fit(population_tensor: tf.Tensor, assets: tf.Tensor, curr_img: tf.Tensor, ref_img: tf.Tensor) -> tf.Tensor:
     start_time = tf.timestamp()
     # Generate images for the current population and compute comparison scores
@@ -503,14 +506,21 @@ num_survivors = tf.constant(NUM_SURVIVORS, dtype=tf.int32)
 num_children = tf.constant(NUM_CHILDREN, dtype=tf.int32) 
 translation_mutation_range = tf.constant(TRANSLATION_MUTATION_RANGE, dtype=tf.float32) 
 angle_mutation_range = tf.constant(ANGLE_MUTATION_RANGE, dtype=tf.float32) 
-scale_mutation_range = tf.constant(SCALE_MUTATION_RANGE, dtype=tf.float32) 
+scale_mutation_range = tf.constant(SCALE_MUTATION_RANGE, dtype=tf.float32)
+
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for .mp4 files
+out = cv2.VideoWriter("video.mp4", fourcc, 30, (width, height))
 
 for i in range(NUM_PLACED_OBJECTS):
-    print(f"{i} / {NUM_PLACED_OBJECTS}")
+    tf.print(f"{i} / {NUM_PLACED_OBJECTS}")
     population = generate_population_tensor(batch_size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range)
     population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
-    population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     curr_tensor_img = get_best_fit(population, assets, curr_tensor_img, tensor_img)
+
+    frame = cv2.cvtColor(np.array(tensor_to_img(curr_tensor_img)), cv2.COLOR_RGB2BGR)
+    out.write(frame)
+
+out.release()
 
 
 img = tensor_to_img(curr_tensor_img)
