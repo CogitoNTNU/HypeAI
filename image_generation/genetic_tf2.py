@@ -6,8 +6,10 @@ from PIL import Image
 from pathlib import Path
 from utils import load_img_from_url
 
+tf.config.set_visible_devices([], 'GPU')
+
 NUM_PLACED_OBJECTS = 1000
-BATCH_SIZE = 100
+BATCH_SIZE = 250
 
 MIN_SCALE = 0.05
 MAX_SCALE = 2
@@ -19,8 +21,8 @@ SCALE_MUTATION_RANGE = 0.5
 NUM_SURVIVORS = 10
 NUM_CHILDREN = (BATCH_SIZE - NUM_SURVIVORS) // NUM_SURVIVORS
 
-# IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
-IMG_URL = "https://static.wikia.nocookie.net/silly-cat/images/f/fe/El_Gato.png/revision/latest/thumbnail/width/360/height/360?cb=20231010115301"
+IMG_URL = "https://cdn.mos.cms.futurecdn.net/8pbgXKXWWZBryyVG9zABRf-1200-80.jpg"
+# IMG_URL = "https://render.fineartamerica.com/images/rendered/default/poster/6/8/break/images/artworkimages/medium/3/handsome-squidward-theodore-mitchell.jpg"
 ASSETS_PATH = Path("./assets/")
 
 # Get the number of available CPU cores
@@ -514,6 +516,7 @@ out = cv2.VideoWriter("video.mp4", fourcc, 30, (width, height))
 for i in range(NUM_PLACED_OBJECTS):
     tf.print(f"{i} / {NUM_PLACED_OBJECTS}")
     population = generate_population_tensor(batch_size, min_x, max_x, min_y, max_y, min_scale, max_scale, index_range)
+    population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     population = update_population(population, assets, curr_tensor_img, tensor_img, num_survivors, num_children, translation_mutation_range, angle_mutation_range, scale_mutation_range)
     curr_tensor_img = get_best_fit(population, assets, curr_tensor_img, tensor_img)
 
