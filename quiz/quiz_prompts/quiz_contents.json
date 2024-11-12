@@ -5,21 +5,21 @@
     },
     {
         "type": "keyword",
-        "content": "AI Chatbots"
+        "content": "Conversational AI"
     },
     {
         "type": "music_prompt",
-        "content": "{\n                    \"prompt\": \"A futuristic and cutting-edge electronic track with a blend of AI-inspired sounds and rhythmic patterns. The music should feel both innovative and slightly unsettling, capturing the essence of advanced technology and the potential impact of artificial intelligence on society.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+        "content": "{\n                    \"prompt\": \"A fast-paced and futuristic electronic track with a sense of innovation and dynamism, blending intricate melodies with pulsating beats, creating an atmosphere of rapid technological advancement and cutting-edge creativity.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q1: Who developed ChatGPT?",
-        "answer": "A1: OpenAI"
+        "question": "Q1: What is ChatGPT?",
+        "answer": "A1: AI chatbot"
     },
     {
         "type": "qa",
-        "question": "Q2: What is GPT-4o?",
-        "answer": "A2: Large language model"
+        "question": "Q2: ChatGPT is based on which model?",
+        "answer": "A2: GPT-4o"
     },
     {
         "type": "qa",
@@ -28,12 +28,12 @@
     },
     {
         "type": "qa",
-        "question": "Q4: What is the current valuation of OpenAI?",
+        "question": "Q4: What was the valuation of OpenAI in 2023?",
         "answer": "A4: $86 billion"
     },
     {
         "type": "qa",
-        "question": "Q5: What is the ChatGPT business model?",
-        "answer": "A5: Freemium"
+        "question": "Q5: What feature do ChatGPT subscriptions provide for image generation?",
+        "answer": "A5: DALL-E 3"
     }
 ]
