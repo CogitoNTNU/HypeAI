@@ -1,0 +1,39 @@
+[
+    {
+        "type": "knowledge",
+        "content": "ChatGPT is a generative artificial intelligence (AI) chatbot[2][3] developed by OpenAI and launched in 2022. It is based on the GPT-4o large language model (LLM). ChatGPT can generate human-like conversational responses, and enables users to refine and steer a conversation towards a desired length, format, style, level of detail, and language.[4] It is credited with accelerating the AI boom, which has led to ongoing rapid investment in and public attention to the field of artificial intelligence.[5] Some observers have raised concern about the potential of ChatGPT and similar programs to displace human intelligence, enable plagiarism, or fuel misinformation.[6][7]\n\nBy January 2023, ChatGPT had become what was then the fastest-growing consumer software application in history, gaining over 100 million users in two months[8] and contributing to the growth of OpenAI's current valuation of $86 billion.[9][10] ChatGPT's release spurred the release of competing products, including Gemini, Claude, Llama, Ernie, and Grok.[11] Microsoft launched Copilot, initially based on OpenAI's GPT-4. In May 2024, a partnership between Apple Inc. and OpenAI was announced, in which ChatGPT was integrated into the Apple Intelligence feature of Apple operating systems.[12] As of July 2024, ChatGPT's website is among the 10 most-visited websites globally.[13][14]\n\nChatGPT is built on OpenAI's proprietary series of generative pre-trained transformer (GPT) models, and is fine-tuned for conversational applications using a combination of supervised learning and reinforcement learning from human feedback.[6] Successive user prompts and replies are considered at each conversation stage as context.[15] ChatGPT was released as a freely available research preview, but due to its popularity, OpenAI now operates the service on a freemium model. Users on its free tier can access GPT-4o. The ChatGPT subscriptions \"Plus\", \"Team\", and \"Enterprise\" provide additional features such as DALL-E 3 image generation and an increased usage limit.[16]"
+    },
+    {
+        "type": "keyword",
+        "content": "AI Chatbots"
+    },
+    {
+        "type": "music_prompt",
+        "content": "{\n                    \"prompt\": \"A futuristic and cutting-edge electronic track with a blend of AI-inspired sounds and rhythmic patterns. The music should feel both innovative and slightly unsettling, capturing the essence of advanced technology and the potential impact of artificial intelligence on society.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+    },
+    {
+        "type": "qa",
+        "question": "Q1: Who developed ChatGPT?",
+        "answer": "A1: OpenAI"
+    },
+    {
+        "type": "qa",
+        "question": "Q2: What is GPT-4o?",
+        "answer": "A2: Large language model"
+    },
+    {
+        "type": "qa",
+        "question": "Q3: How many users did ChatGPT gain in two months?",
+        "answer": "A3: 100 million"
+    },
+    {
+        "type": "qa",
+        "question": "Q4: What is the current valuation of OpenAI?",
+        "answer": "A4: $86 billion"
+    },
+    {
+        "type": "qa",
+        "question": "Q5: What is the ChatGPT business model?",
+        "answer": "A5: Freemium"
+    }
+]
