@@ -1,5 +1,6 @@
 import json
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, AudioFileClip
+from textwrap3 import wrap
 import os
 
 def create_quiz_video(json_file, video_file, audio_file, output_dir):
@@ -44,16 +45,34 @@ def create_quiz_video(json_file, video_file, audio_file, output_dir):
     # Create text clips for each question and its corresponding answer
     for i, (question, answer) in enumerate(zip(questions, answers)):
         start_time = i * total_duration_per_pair
+        
+        # Wrap the question and join with line breaks
+        wrapped_question = "\n".join(wrap(question, width=40))
+        wrapped_answer = "\n".join(wrap(answer, width=40))
+
+        # Create the question clip with wrapped text
+        question_clip = TextClip(wrapped_question, fontsize=90, color='white', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=2)
+        question_clip = question_clip.set_position('center').set_duration(question_duration).set_start(start_time)
+        question_answer_clips.append(question_clip)
+
+        # Create the answer clip with wrapped text
+        answer_clip = TextClip(wrapped_answer, fontsize=90, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=2)
+        answer_clip = answer_clip.set_position('center').set_duration(answer_duration).set_start(start_time + question_duration)
+        question_answer_clips.append(answer_clip)
+        
+        '''
+        question = wrap(question, width=40)
+        wrapped_answer = wrap(answer, width=40)
 
         # Create the question clip
-        question_clip = TextClip(question, fontsize=40, color='white', bg_color='rgba(0, 0, 0, 0)', size=video.size)
+        question_clip = TextClip(question, fontsize=70, color='white', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact")
         question_clip = question_clip.set_position('center').set_duration(question_duration).set_start(start_time)
         question_answer_clips.append(question_clip)
 
         # Create the answer clip
-        answer_clip = TextClip(answer, fontsize=40, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size)
+        answer_clip = TextClip(answer, fontsize=70, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact")
         answer_clip = answer_clip.set_position('center').set_duration(answer_duration).set_start(start_time + question_duration)
-        question_answer_clips.append(answer_clip)
+        question_answer_clips.append(answer_clip)'''
 
     # Assemble the video
     final_video = CompositeVideoClip([video] + question_answer_clips)

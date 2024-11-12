@@ -5,35 +5,35 @@
     },
     {
         "type": "keyword",
-        "content": "Brushwork perception"
+        "content": "Brushstrokes"
     },
     {
         "type": "music_prompt",
-        "content": "{\n                    \"prompt\": \"A composition that paints a picture with delicate, fleeting brushstrokes of sound, capturing the essence of light and movement in everyday scenes.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+        "content": "{\n                    \"prompt\": \"Create a piece inspired by the play of light and color, evoking a sense of movement, with a focus on ordinary subjects observed through unique perspectives, capturing fleeting moments in time.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q1: What art movement emphasized light, color, and brush strokes?",
-        "answer": "A1: Impressionism"
+        "question": "Q1: Who coined the term \"Impressionism\"?",
+        "answer": "A1: Louis Leroy"
     },
     {
         "type": "qa",
-        "question": "Q2: Which artist's work inspired the term \"Impressionism\"?",
-        "answer": "A2: Monet"
+        "question": "Q2: What Claude Monet painting inspired the term \"Impressionism\"?",
+        "answer": "A2: Sunrise"
     },
     {
         "type": "qa",
-        "question": "Q3: When did Impressionism arise?",
-        "answer": "A3: 19th century"
+        "question": "Q3: In what century did Impressionism originate?",
+        "answer": "A3: 19th"
     },
     {
         "type": "qa",
-        "question": "Q4: What subject matter did Impressionism focus on?",
-        "answer": "A4: Ordinary"
+        "question": "Q4: What was a key element of Impressionist art's depiction?",
+        "answer": "A4: Light"
     },
     {
         "type": "qa",
-        "question": "Q5: Which country did Impressionism face opposition in?",
-        "answer": "A5: France"
+        "question": "Q5: Where did the Impressionists hold their independent exhibitions?",
+        "answer": "A5: Paris"
     }
 ]
