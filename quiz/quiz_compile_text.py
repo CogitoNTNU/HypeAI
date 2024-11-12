@@ -103,7 +103,7 @@ def generate_quiz_keyword(knowledge_file, model="gpt-3.5-turbo", max_tokens=20):
     knowledge_text = read_text_from_file(knowledge_file)
     
     # Define the system prompt to generate a keyword
-    system_prompt = "Your job is to generate a single tag/keyword that captures the essence of the following knowledge. It must not be longer than two words and should be as relevant as possible."
+    system_prompt = "Your job is to generate a single tag/keyword that captures the essence of the following knowledge. It must not be longer than two words. It should also be general and designed to find a video that is broadly related to the topic. This means it should use terms which are well known, never complicated or obscure language! If the topic is specific and well-known, just use the common term alone. For example, if the topic is 'Minecraft', use 'Minecraft'. NEVER USE COMPLEX OR OBSCURE WORDS NO MATTER WHAT."
     user_prompt = knowledge_text
     
     # Generate the keyword

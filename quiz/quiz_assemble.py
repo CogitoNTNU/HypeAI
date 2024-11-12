@@ -25,6 +25,8 @@ def create_quiz_video(json_file, video_file, audio_file, output_dir):
     # Collect questions and answers
     questions = []
     answers = []
+    
+    font_size = int(video.size[1] / 9)
 
     for item in quiz_data:
         if item["type"] == "qa":
@@ -51,12 +53,12 @@ def create_quiz_video(json_file, video_file, audio_file, output_dir):
         wrapped_answer = "\n".join(wrap(answer, width=40))
 
         # Create the question clip with wrapped text
-        question_clip = TextClip(wrapped_question, fontsize=90, color='white', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=2)
+        question_clip = TextClip(wrapped_question, fontsize=font_size, color='white', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=4)
         question_clip = question_clip.set_position('center').set_duration(question_duration).set_start(start_time)
         question_answer_clips.append(question_clip)
 
         # Create the answer clip with wrapped text
-        answer_clip = TextClip(wrapped_answer, fontsize=90, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=2)
+        answer_clip = TextClip(wrapped_answer, fontsize=font_size, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact", stroke_color='red', stroke_width=4)
         answer_clip = answer_clip.set_position('center').set_duration(answer_duration).set_start(start_time + question_duration)
         question_answer_clips.append(answer_clip)
         
@@ -71,7 +73,7 @@ def create_quiz_video(json_file, video_file, audio_file, output_dir):
 
         # Create the answer clip
         answer_clip = TextClip(answer, fontsize=70, color='yellow', bg_color='rgba(0, 0, 0, 0)', size=video.size, font="Impact")
-        answer_clip = answer_clip.set_position('center').set_duration(answer_duration).set_start(start_time + question_duration)
+        answer_clip = answer_clip.set_position('center').set_duration  (answer_duration).set_start(start_time + question_duration)
         question_answer_clips.append(answer_clip)'''
 
     # Assemble the video

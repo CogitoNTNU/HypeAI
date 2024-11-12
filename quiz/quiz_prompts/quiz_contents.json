@@ -1,39 +1,44 @@
 [
     {
         "type": "knowledge",
-        "content": "ChatGPT is a generative artificial intelligence (AI) chatbot[2][3] developed by OpenAI and launched in 2022. It is based on the GPT-4o large language model (LLM). ChatGPT can generate human-like conversational responses, and enables users to refine and steer a conversation towards a desired length, format, style, level of detail, and language.[4] It is credited with accelerating the AI boom, which has led to ongoing rapid investment in and public attention to the field of artificial intelligence.[5] Some observers have raised concern about the potential of ChatGPT and similar programs to displace human intelligence, enable plagiarism, or fuel misinformation.[6][7]\n\nBy January 2023, ChatGPT had become what was then the fastest-growing consumer software application in history, gaining over 100 million users in two months[8] and contributing to the growth of OpenAI's current valuation of $86 billion.[9][10] ChatGPT's release spurred the release of competing products, including Gemini, Claude, Llama, Ernie, and Grok.[11] Microsoft launched Copilot, initially based on OpenAI's GPT-4. In May 2024, a partnership between Apple Inc. and OpenAI was announced, in which ChatGPT was integrated into the Apple Intelligence feature of Apple operating systems.[12] As of July 2024, ChatGPT's website is among the 10 most-visited websites globally.[13][14]\n\nChatGPT is built on OpenAI's proprietary series of generative pre-trained transformer (GPT) models, and is fine-tuned for conversational applications using a combination of supervised learning and reinforcement learning from human feedback.[6] Successive user prompts and replies are considered at each conversation stage as context.[15] ChatGPT was released as a freely available research preview, but due to its popularity, OpenAI now operates the service on a freemium model. Users on its free tier can access GPT-4o. The ChatGPT subscriptions \"Plus\", \"Team\", and \"Enterprise\" provide additional features such as DALL-E 3 image generation and an increased usage limit.[16]"
+        "content": "Artificial intelligence (AI), in its broadest sense, is intelligence exhibited by machines, particularly computer systems. It is a field of research in computer science that develops and studies methods and software that enable machines to perceive their environment and use learning and intelligence to take actions that maximize their chances of achieving defined goals.[1] Such machines may be called AIs.\n\nSome high-profile applications of AI include advanced web search engines (e.g., Google Search); recommendation systems (used by YouTube, Amazon, and Netflix); interacting via human speech (e.g., Google Assistant, Siri, and Alexa); autonomous vehicles (e.g., Waymo); generative and creative tools (e.g., ChatGPT, and AI art); and superhuman play and analysis in strategy games (e.g., chess and Go). However, many AI applications are not perceived as AI: \"A lot of cutting edge AI has filtered into general applications, often without being called AI because once something becomes useful enough and common enough it's not labeled AI anymore.\"[2][3]"
     },
     {
         "type": "keyword",
-        "content": "Conversational AI"
+        "content": "Machine Intelligence"
     },
     {
         "type": "music_prompt",
-        "content": "{\n                    \"prompt\": \"A fast-paced and futuristic electronic track with a sense of innovation and dynamism, blending intricate melodies with pulsating beats, creating an atmosphere of rapid technological advancement and cutting-edge creativity.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
+        "content": "{\n                    \"prompt\": \"A modern, futuristic electronic track that combines complex layers of sound to create a dynamic and evolving auditory experience, capturing the essence of advanced technology and artificial intelligence.\",\n                    \"make_instrumental\": False,\n                    \"wait_audio\": False\n                    }"
     },
     {
         "type": "qa",
-        "question": "Q1: What is ChatGPT?",
-        "answer": "A1: AI chatbot"
+        "question": "Q1: What does AI stand for?",
+        "answer": "A1: Artificial intelligence"
     },
     {
         "type": "qa",
-        "question": "Q2: ChatGPT is based on which model?",
-        "answer": "A2: GPT-4o"
+        "question": "Q2: Which search engine uses AI in its algorithms?",
+        "answer": "A2: Google"
     },
     {
         "type": "qa",
-        "question": "Q3: How many users did ChatGPT gain in two months?",
-        "answer": "A3: 100 million"
+        "question": "Q3: Name one application of AI in interaction.",
+        "answer": "A3: Siri"
     },
     {
         "type": "qa",
-        "question": "Q4: What was the valuation of OpenAI in 2023?",
-        "answer": "A4: $86 billion"
+        "question": "Q4: What is a common use case of AI in vehicles?",
+        "answer": "A4: Autonomous driving"
     },
     {
         "type": "qa",
-        "question": "Q5: What feature do ChatGPT subscriptions provide for image generation?",
-        "answer": "A5: DALL-E 3"
+        "question": "Q5: What field studies AI methods and software?",
+        "answer": "A5: Computer science"
     }
 ]
+
+
+
+
+

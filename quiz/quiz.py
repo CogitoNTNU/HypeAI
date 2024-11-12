@@ -31,7 +31,7 @@ def generate_full():
     # Try to find the video file. NB: assuming there is only one video file in the folder
     video_files = glob.glob(os.path.join(downloaded_components_path, "*.mp4"))
     if not video_files:
-        raise FileNotFoundError(f"No video file found in {downloaded_component_path}")
+        raise FileNotFoundError(f"No video file found in {downloaded_components_path}")
     
     video_file = video_files[0]
     
