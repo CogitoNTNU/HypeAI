@@ -43,4 +43,4 @@ COPY . .
 
 
 # Run the main.py script
-# CMD ["python3", "main.py"]
+CMD ["python3", "main.py"]

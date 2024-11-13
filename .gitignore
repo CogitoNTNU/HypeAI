@@ -260,4 +260,8 @@ image_generation/assets
 manim_temp.py
 *.mp3
 
+# Sensitive information
 cookies.txt
+
+# Output of the generators
+output/*

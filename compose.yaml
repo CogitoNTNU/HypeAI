@@ -1,6 +1,8 @@
 services:
   selenium-app:
     build: .
+    env_file:
+      - ./.env
     command: python3 main.py
     ports:
       - "4444:4444"  # Expose the Selenium server port

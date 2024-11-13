@@ -33,7 +33,6 @@ def generate_text(system_prompt, user_prompt, model="gpt-3.5-turbo", max_tokens=
         {"role": "user", "content": user_prompt}
     ],
     max_tokens=max_tokens)
-    return response.choices[0].message.content.strip()
 
 if __name__ == "__main__":
     system_prompt = "You are a helpful assistant."

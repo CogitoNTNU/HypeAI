@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import os
 import random
+from automator.description_generator import DescriptionGenerator
 from automator.video_uploader import VideoUploader
 from automator.video_generator import VideoGenerator
 
@@ -11,6 +12,7 @@ class VideoAutomator:
     def __init__(self) -> None:
         self.video_generators: list[VideoGenerator] = []
         self.video_uploaders: list[VideoUploader] = []
+        self.description_generator = DescriptionGenerator()
 
     def add_video_generator(self, video_generator: VideoGenerator) -> None:
         self.video_generators.append(video_generator)
@@ -23,14 +25,23 @@ class VideoAutomator:
             video_generator.generate(output_path=OUTPUT_PATH)
 
     def upload_random_video(self) -> None:
+        print("Uploading a random video")
         videos = os.listdir(OUTPUT_PATH)
         if not videos:
             print("No videos to upload")
             return
 
         video = random.choice(videos)
+
+        print(f"Uploading video: {video}")
+        description = self.description_generator.generate(video)
+
+        print(f"Description: {description}")
+
         for video_uploader in self.video_uploaders:
-            video_uploader.upload(video_path=os.path.join(OUTPUT_PATH, video))
+            video_uploader.upload(
+                video_path=os.path.join(OUTPUT_PATH, video), description=description
+            )
             self.remove_video(os.path.join(OUTPUT_PATH, video))
 
     def has_videos(self) -> bool:
